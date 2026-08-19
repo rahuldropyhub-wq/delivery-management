@@ -97,12 +97,18 @@ export default function OtpVerificationPage() {
   const handleResend = async () => {
     if (timer > 0 || isResending) return;
     setIsResending(true);
-    await sendOtp(pendingMobile);
+    const result = await sendOtp(pendingMobile);
     setIsResending(false);
+
+    if (result && !result.success) {
+      showToast(result.error || "Failed to resend OTP", "error");
+      return;
+    }
+
     setTimer(30);
     setOtp(["", "", "", "", "", ""]);
     setErrorMessage("");
-    showToast("New OTP sent: 123456", "info");
+    showToast(result?.message || "New OTP sent", "success");
     inputRefs.current[0]?.focus();
   };
 

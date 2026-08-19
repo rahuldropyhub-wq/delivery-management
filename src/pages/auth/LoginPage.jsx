@@ -25,9 +25,15 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     const fullMobile = `+91 ${data.mobile}`;
-    await sendOtp(fullMobile);
+    const result = await sendOtp(fullMobile);
     setIsLoading(false);
-    showToast("OTP sent: 123456 (Demo Code)", "info");
+
+    if (result && !result.success) {
+      showToast(result.error || "Failed to send OTP", "error");
+      return;
+    }
+
+    showToast(result?.message || "OTP sent successfully to your mobile", "success");
     navigate('/verify-otp');
   };
 
