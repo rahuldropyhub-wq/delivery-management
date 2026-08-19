@@ -30,40 +30,48 @@ export function AuthProvider({ children }) {
   }, [pendingMobile]);
 
   // Setup invisible reCAPTCHA verifier for Firebase Phone Auth
-  const setupRecaptcha = (containerId = 'recaptcha-container') => {
+  const setupRecaptcha = () => {
     if (!isFirebaseConfigured) return null;
-    
-    // Clean up DOM container to prevent "reCAPTCHA has already been rendered in this element" error
-    const container = document.getElementById(containerId);
-    if (container) {
+
+    if (window.recaptchaVerifier) {
+      return window.recaptchaVerifier;
+    }
+
+    let container = document.getElementById('recaptcha-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'recaptcha-container';
+      document.body.appendChild(container);
+    } else {
       container.innerHTML = '';
     }
 
-    if (window.recaptchaVerifier) {
-      try {
-        window.recaptchaVerifier.clear();
-      } catch (e) {}
-      window.recaptchaVerifier = null;
-    }
-
     try {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
         callback: () => {
           // reCAPTCHA solved
         },
         'expired-callback': () => {
-          if (window.recaptchaVerifier) {
-            try { window.recaptchaVerifier.clear(); } catch (e) {}
-            window.recaptchaVerifier = null;
-          }
+          try {
+            window.recaptchaVerifier?.clear();
+          } catch (e) {}
+          window.recaptchaVerifier = null;
         }
       });
+      return window.recaptchaVerifier;
     } catch (err) {
-      console.error("RecaptchaVerifier creation error:", err);
+      console.warn("Recaptcha recreation:", err);
+      if (container) container.remove();
+      const freshContainer = document.createElement('div');
+      freshContainer.id = 'recaptcha-container';
+      document.body.appendChild(freshContainer);
+
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible'
+      });
+      return window.recaptchaVerifier;
     }
-    
-    return window.recaptchaVerifier;
   };
 
   const sendOtp = async (mobile) => {
@@ -75,26 +83,39 @@ export function AuthProvider({ children }) {
 
     if (isFirebaseConfigured) {
       try {
-        const verifier = setupRecaptcha('recaptcha-container');
+        const verifier = setupRecaptcha();
         const confirmation = await signInWithPhoneNumber(auth, formatted, verifier);
         setConfirmationResult(confirmation);
         return {
           success: true,
           isFirebase: true,
-          message: `Live SMS OTP sent by Firebase to ${formatted}`
+          message: `OTP sent successfully to ${formatted}`
         };
       } catch (error) {
         console.error("Firebase sendOtp error:", error);
-        // Reset reCAPTCHA on error
+        
+        // Clean up reCAPTCHA instance on failure so user can retry immediately
         if (window.recaptchaVerifier) {
           try {
             window.recaptchaVerifier.clear();
-            window.recaptchaVerifier = null;
           } catch (e) {}
+          window.recaptchaVerifier = null;
         }
+        const container = document.getElementById('recaptcha-container');
+        if (container) {
+          container.remove();
+        }
+
+        let userError = error.message;
+        if (error.code === 'auth/billing-not-enabled') {
+          userError = "Billing not enabled for carrier SMS. Please add your number under Firebase 'Phone numbers for testing' or upgrade to Blaze plan.";
+        } else if (error.code === 'auth/invalid-phone-number') {
+          userError = "Invalid phone number format.";
+        }
+
         return {
           success: false,
-          error: error.message || "Failed to send live SMS OTP. Please check your Firebase settings."
+          error: userError
         };
       }
     } else {
