@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Layout
 import AppLayout from './components/layout/AppLayout';
@@ -75,6 +77,8 @@ export default function App() {
             {/* 404 Catch-All */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          <Analytics />
+          <SpeedInsights />
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
