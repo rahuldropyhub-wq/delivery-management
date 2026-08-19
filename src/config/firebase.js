@@ -2,7 +2,7 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBlb2LwPjUfN4JnfJVjwavCvhmTv_eFM3I",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBlb2lwPjUfN4JnfJVjwavCvhmTv_eFM3I",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "delivery-management-bdbbe.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "delivery-management-bdbbe",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "delivery-management-bdbbe.firebasestorage.app",
