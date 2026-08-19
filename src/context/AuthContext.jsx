@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
     const saved = localStorage.getItem('dp_auth');
     return saved !== null ? saved === 'true' : true;
   });
-  
+
   const [pendingMobile, setPendingMobile] = useState(() => {
     return localStorage.getItem('dp_pending_mobile') || "+91 9030545655";
   });
@@ -148,7 +148,7 @@ export function AuthProvider({ children }) {
     if (isSupabaseConfigured) {
       try {
         await supabase.auth.signOut();
-      } catch (e) {}
+      } catch (e) { }
     }
     setIsAuthenticated(false);
     localStorage.setItem('dp_auth', 'false');
