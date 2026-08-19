@@ -18,7 +18,7 @@ export default function LoginPage() {
     formState: { errors }
   } = useForm({
     defaultValues: {
-      mobile: "9876543210"
+      mobile: "9030545655"
     }
   });
 
@@ -38,8 +38,8 @@ export default function LoginPage() {
   };
 
   const handleQuickFill = () => {
-    setValue("mobile", "9876543210", { shouldValidate: true });
-    showToast("Demo mobile number filled", "info");
+    setValue("mobile", "9030545655", { shouldValidate: true });
+    showToast("Mobile number filled: 9030545655", "info");
   };
 
   return (
