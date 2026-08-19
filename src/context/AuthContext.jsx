@@ -33,17 +33,36 @@ export function AuthProvider({ children }) {
   const setupRecaptcha = (containerId = 'recaptcha-container') => {
     if (!isFirebaseConfigured) return null;
     
-    if (!window.recaptchaVerifier) {
+    // Clean up DOM container to prevent "reCAPTCHA has already been rendered in this element" error
+    const container = document.getElementById(containerId);
+    if (container) {
+      container.innerHTML = '';
+    }
+
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch (e) {}
+      window.recaptchaVerifier = null;
+    }
+
+    try {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, containerId, {
         size: 'invisible',
         callback: () => {
-          // reCAPTCHA solved - allow signInWithPhoneNumber
+          // reCAPTCHA solved
         },
         'expired-callback': () => {
-          // Response expired. Ask user to solve reCAPTCHA again.
+          if (window.recaptchaVerifier) {
+            try { window.recaptchaVerifier.clear(); } catch (e) {}
+            window.recaptchaVerifier = null;
+          }
         }
       });
+    } catch (err) {
+      console.error("RecaptchaVerifier creation error:", err);
     }
+    
     return window.recaptchaVerifier;
   };
 
