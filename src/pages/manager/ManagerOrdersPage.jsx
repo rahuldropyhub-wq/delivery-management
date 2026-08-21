@@ -251,53 +251,71 @@ export default function ManagerOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
-              {filteredOrders.map((order) => {
-                const exec = executives.find((e) => e.id === order.executiveId);
-                return (
-                  <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-5 py-3.5 font-mono font-bold text-navy-900">
-                      {order.id}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="font-bold text-navy-900">{order.executiveName || exec?.name || "Rahul Sharma"}</div>
-                      <div className="text-[10px] font-mono text-slate-400">{order.executiveId || "EXE12345"}</div>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-500">
-                      {order.orderDate}, {order.orderTime}
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-700">
-                      {order.dropArea}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <StatusBadge status={order.status} size="sm" />
-                    </td>
-                    <td className="px-5 py-3.5 text-right text-slate-500 text-[11px]">
-                      ₹{order.basePay || 80} + ₹{order.surgePay || 0} + ₹{order.tip || 0}
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-extrabold text-navy-900 text-sm">
-                      ₹{order.earnings}
-                    </td>
-                    <td className="px-5 py-3.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => handleOpenEdit(order)}
-                          className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-                          title="Edit Order"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(order.id)}
-                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
-                          title="Delete Order"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-slate-500">
+                    <Package className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="font-bold text-sm text-navy-900">0 Orders in Hub Record</p>
+                    <p className="text-xs text-slate-400 mt-0.5 mb-3">Your database has no orders recorded yet.</p>
+                    <button
+                      type="button"
+                      onClick={handleOpenAdd}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-sm inline-flex items-center gap-1.5"
+                    >
+                      <PlusCircle className="w-4 h-4" />
+                      <span>Create First Order</span>
+                    </button>
+                  </td>
+                </tr>
+              ) : (
+                filteredOrders.map((order) => {
+                  const exec = executives.find((e) => e.id === order.executiveId);
+                  return (
+                    <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-5 py-3.5 font-mono font-bold text-navy-900">
+                        {order.id}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="font-bold text-navy-900">{order.executiveName || exec?.name || "Delivery Executive"}</div>
+                        <div className="text-[10px] font-mono text-slate-400">{order.executiveId || "EXE12345"}</div>
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-500">
+                        {order.orderDate}, {order.orderTime}
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-700">
+                        {order.dropArea}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <StatusBadge status={order.status} size="sm" />
+                      </td>
+                      <td className="px-5 py-3.5 text-right text-slate-500 text-[11px]">
+                        ₹{order.basePay || 80} + ₹{order.surgePay || 0} + ₹{order.tip || 0}
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-extrabold text-navy-900 text-sm">
+                        ₹{order.earnings}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleOpenEdit(order)}
+                            className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+                            title="Edit Order"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(order.id)}
+                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
+                            title="Delete Order"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

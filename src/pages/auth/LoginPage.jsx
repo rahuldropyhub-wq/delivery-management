@@ -18,7 +18,7 @@ export default function LoginPage() {
     formState: { errors }
   } = useForm({
     defaultValues: {
-      email: "rahul.sharma@deliverypro.in"
+      email: ""
     }
   });
 

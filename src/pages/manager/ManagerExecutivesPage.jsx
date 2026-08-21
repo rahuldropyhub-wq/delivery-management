@@ -268,92 +268,111 @@ export default function ManagerExecutivesPage() {
 
       {/* Executives List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredExecutives.map((exec) => (
-          <div
-            key={exec.id}
-            className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={exec.avatar}
-                    alt={exec.name}
-                    className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-100"
-                  />
-                  <div>
-                    <h3 className="font-bold text-navy-900 text-sm leading-tight">{exec.name}</h3>
-                    <p className="font-mono text-slate-400 text-xs mt-0.5">{exec.id}</p>
+        {filteredExecutives.length === 0 ? (
+          <div className="col-span-full bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-sm">
+            <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mx-auto mb-3 border border-amber-200">
+              <Users className="w-7 h-7" />
+            </div>
+            <h3 className="text-base font-bold text-navy-900">0 Delivery Executives in Fleet</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5">
+              Your live database is clean and empty. Start building your fleet by onboarding your first delivery candidate.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ Onboard First Candidate</span>
+            </button>
+          </div>
+        ) : (
+          filteredExecutives.map((exec) => (
+            <div
+              key={exec.id}
+              className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={exec.avatar}
+                      alt={exec.name}
+                      className="w-12 h-12 rounded-2xl object-cover ring-2 ring-slate-100"
+                    />
+                    <div>
+                      <h3 className="font-bold text-navy-900 text-sm leading-tight">{exec.name}</h3>
+                      <p className="font-mono text-slate-400 text-xs mt-0.5">{exec.id}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-1">
+                    <StatusBadge status={exec.accountStatus || "Active"} size="sm" />
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                      KYC: {exec.kycStatus || "Verified"}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-1">
-                  <StatusBadge status={exec.accountStatus || "Active"} size="sm" />
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                    KYC: {exec.kycStatus || "Verified"}
-                  </span>
+                {/* Performance Metrics Box */}
+                <div className="mt-4 p-3 bg-slate-50 rounded-2xl border border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold text-slate-400 block">Orders</span>
+                    <p className="font-extrabold text-navy-900 mt-0.5">
+                      {exec.stats?.weeklyOrders || 0} / {exec.stats?.weeklyTarget || 50}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold text-slate-400 block">Earnings</span>
+                    <p className="font-extrabold text-emerald-700 mt-0.5">
+                      ₹{exec.stats?.weeklyEarnings?.toLocaleString('en-IN') || 0}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-semibold text-slate-400 block">Rating</span>
+                    <p className="font-extrabold text-purple-700 mt-0.5">
+                      ★ {exec.rating || "4.9"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Meta details */}
+                <div className="mt-3 space-y-1 text-xs text-slate-500">
+                  <p className="flex items-center gap-1.5 truncate">
+                    <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{exec.mobile}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5 truncate">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">{exec.zone}</span>
+                  </p>
+                  <p className="flex items-center gap-1.5 truncate">
+                    <Bike className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{exec.vehicleInfo?.model} ({exec.vehicleInfo?.regNumber})</span>
+                  </p>
                 </div>
               </div>
 
-              {/* Performance Metrics Box */}
-              <div className="mt-4 p-3 bg-slate-50 rounded-2xl border border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
-                <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Orders</span>
-                  <p className="font-extrabold text-navy-900 mt-0.5">
-                    {exec.stats?.weeklyOrders || 0} / {exec.stats?.weeklyTarget || 50}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Earnings</span>
-                  <p className="font-extrabold text-emerald-700 mt-0.5">
-                    ₹{exec.stats?.weeklyEarnings?.toLocaleString('en-IN') || 0}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Rating</span>
-                  <p className="font-extrabold text-purple-700 mt-0.5">
-                    ★ {exec.rating || "4.9"}
-                  </p>
-                </div>
-              </div>
+              {/* Actions */}
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+                <button
+                  onClick={() => handleOpenEdit(exec)}
+                  className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  <span>Edit Executive Data</span>
+                </button>
 
-              {/* Meta details */}
-              <div className="mt-3 space-y-1 text-xs text-slate-500">
-                <p className="flex items-center gap-1.5 truncate">
-                  <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>{exec.mobile}</span>
-                </p>
-                <p className="flex items-center gap-1.5 truncate">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="truncate">{exec.zone}</span>
-                </p>
-                <p className="flex items-center gap-1.5 truncate">
-                  <Bike className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>{exec.vehicleInfo?.model} ({exec.vehicleInfo?.regNumber})</span>
-                </p>
+                <button
+                  onClick={() => handleDelete(exec.id, exec.name)}
+                  className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
+                  title="Remove candidate"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
-
-            {/* Actions */}
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
-              <button
-                onClick={() => handleOpenEdit(exec)}
-                className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-              >
-                <Edit className="w-3.5 h-3.5" />
-                <span>Edit Executive Data</span>
-              </button>
-
-              <button
-                onClick={() => handleDelete(exec.id, exec.name)}
-                className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
-                title="Remove candidate"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        ))}
+          )))}
       </div>
 
       {/* ========================================================================= */}

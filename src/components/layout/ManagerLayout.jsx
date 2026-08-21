@@ -156,7 +156,7 @@ export default function ManagerLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Mobile Manager Header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-slate-900 text-white px-4 py-3 border-b border-slate-800 flex items-center justify-between pt-safe">
+        <header className="lg:hidden sticky top-0 z-30 bg-slate-900 text-white px-4 pt-4 pb-3 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

@@ -1,21 +1,98 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initialExecutives } from '../data/executives';
-import { mockOrders } from '../data/orders';
-import { earningsSummary, earningsChartData, dailyEarningsBreakdown, payoutHistory } from '../data/earnings';
-import { currentMilestone, milestoneHistory } from '../data/milestones';
-import { weeklyContestData } from '../data/contest';
-import { leaderboardData } from '../data/leaderboard';
-import { rewardsData } from '../data/rewards';
-import { referralData } from '../data/referrals';
-import { initialNotifications } from '../data/notifications';
-import { initialTickets, supportCategories } from '../data/tickets';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabaseService } from '../services/supabaseService';
+import { supabase, isSupabaseConfigured } from '../config/supabase';
 
 const DataContext = createContext(null);
 
-const STORAGE_KEY = 'dp_portal_data_v1';
+const STORAGE_KEY = 'dp_portal_live_data_v2';
+
+export const supportCategories = [
+  "Earnings & Payouts",
+  "Order & Delivery Issues",
+  "App & Technical Glitches",
+  "Profile & KYC Verification",
+  "Account Safety & Security",
+  "Other Inquiries"
+];
+
+const emptyInitialState = {
+  executives: [],
+  orders: [],
+  earnings: {
+    summary: {
+      total: 0,
+      deliveryEarnings: 0,
+      bonus: 0,
+      referral: 0,
+      nextPayoutDate: "Upcoming Sunday",
+      currentCycle: "Active Week"
+    },
+    chartData: [],
+    dailyBreakdown: [],
+    payoutHistory: []
+  },
+  milestone: {
+    id: "MS-DEFAULT",
+    title: "Weekly Target",
+    targetOrders: 50,
+    completedOrders: 0,
+    reward: "₹500 Bonus",
+    rewardAmount: 500,
+    percentage: 0,
+    remainingOrders: 50,
+    period: "Current Week",
+    deadline: "Sunday, 11:59 PM",
+    status: "In Progress",
+    tiers: [],
+    history: []
+  },
+  contest: {
+    id: "CONT-DEFAULT",
+    title: "Monsoon Delivery Challenge 🏆",
+    prizePool: 3000,
+    firstPrize: 1500,
+    secondPrize: 1000,
+    thirdPrize: 500,
+    minOrdersToQualify: 25,
+    status: "Active",
+    daysRemaining: 4,
+    hoursRemaining: 18,
+    topRankings: []
+  },
+  leaderboard: {
+    currentZone: "Nellore Central Hub (Zone 3)",
+    topPerformers: [],
+    userStats: {
+      rank: 1,
+      ordersCompleted: 0,
+      customerRating: 5.0,
+      acceptanceRate: "100%",
+      onTimeDelivery: "100%"
+    }
+  },
+  rewards: {
+    userPoints: 0,
+    items: [],
+    redemptionHistory: []
+  },
+  referrals: {
+    referralCode: "DP-JOIN",
+    referralLink: "https://dropyhub.com/join",
+    rewardPerReferral: 300,
+    termsSummary: "Earn ₹300 for every candidate onboarded who completes 25 deliveries.",
+    stats: {
+      totalReferrals: 0,
+      joined: 0,
+      earnings: 0
+    },
+    invitedCandidates: []
+  },
+  notifications: [],
+  tickets: [],
+  lastUpdated: new Date().toISOString()
+};
 
 export function DataProvider({ children }) {
-  // Initialize state from localStorage or initial seed datasets
   const [data, setData] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -23,70 +100,300 @@ export function DataProvider({ children }) {
         return JSON.parse(saved);
       }
     } catch (e) {
-      console.warn("Could not load data from localStorage:", e);
+      console.warn("Could not load data from storage:", e);
     }
-
-    // Default structure
-    // Ensure all initial mock orders have executiveId attached
-    const enrichedOrders = mockOrders.map((o) => ({
-      ...o,
-      executiveId: o.executiveId || "EXE12345",
-      executiveName: o.executiveName || "Rahul Sharma"
-    }));
-
-    return {
-      executives: initialExecutives,
-      orders: enrichedOrders,
-      earnings: {
-        summary: earningsSummary,
-        chartData: earningsChartData,
-        dailyBreakdown: dailyEarningsBreakdown,
-        payoutHistory: payoutHistory
-      },
-      milestone: {
-        ...currentMilestone,
-        history: milestoneHistory
-      },
-      contest: weeklyContestData,
-      leaderboard: leaderboardData,
-      rewards: rewardsData,
-      referrals: referralData,
-      notifications: initialNotifications,
-      tickets: initialTickets,
-      lastUpdated: new Date().toISOString()
-    };
+    return emptyInitialState;
   });
+
+  const [isLoading, setIsLoading] = useState(true);
 
   // Persist whenever state changes
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.warn("Failed to persist data to localStorage:", e);
-    }
+    } catch (e) { }
   }, [data]);
+
+  // -------------------------------------------------------------
+  // Initial Supabase Live Data Sync & Realtime Subscription
+  // -------------------------------------------------------------
+  const syncSupabaseLive = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const [execs, orders, notifs, tickets, payouts, milestones, rewards, referrals] = await Promise.all([
+        supabaseService.fetchExecutives(),
+        supabaseService.fetchOrders(),
+        supabaseService.fetchNotifications(),
+        supabaseService.fetchTickets(),
+        supabaseService.fetchPayouts(),
+        supabaseService.fetchMilestones(),
+        supabaseService.fetchRewards(),
+        supabaseService.fetchReferrals()
+      ]);
+
+      setData((prev) => {
+        const next = { ...prev };
+
+        // 1. Executives
+        next.executives = (execs || []).map((e) => ({
+          id: e.id,
+          name: e.name,
+          avatar: e.avatar,
+          mobile: e.mobile,
+          email: e.email,
+          city: e.city || "Nellore",
+          zone: e.zone,
+          dob: e.dob,
+          bloodGroup: e.blood_group,
+          emergencyContact: e.emergency_contact,
+          joiningDate: e.joining_date,
+          kycStatus: e.kyc_status,
+          accountStatus: e.account_status,
+          rating: Number(e.rating) || 5.0,
+          totalDeliveriesLifetime: Number(e.total_deliveries_lifetime) || 0,
+          vehicleInfo: {
+            type: e.vehicle_type || "Two Wheeler (Bike)",
+            model: e.vehicle_model || "",
+            regNumber: e.vehicle_reg_number || "",
+            license: e.driving_license || ""
+          },
+          payoutAccount: {
+            bankName: e.bank_name || "State Bank of India",
+            accountNumberMasked: e.bank_account_masked || "•••• 4589",
+            upiId: e.upi_id || ""
+          },
+          stats: {
+            weeklyOrders: Number(e.weekly_orders) || 0,
+            weeklyTarget: Number(e.weekly_target) || 50,
+            weeklyEarnings: Number(e.weekly_earnings) || 0,
+            deliveryEarnings: Number(e.delivery_earnings) || 0,
+            bonusEarnings: Number(e.bonus_earnings) || 0,
+            referralEarnings: Number(e.referral_earnings) || 0,
+            totalEarnings: Number(e.weekly_earnings) || 0,
+            rank: Number(e.rank) || 1,
+            progressPercentage: Math.min(100, Math.round(((Number(e.weekly_orders) || 0) / (Number(e.weekly_target) || 50)) * 100)),
+            remainingOrders: Math.max(0, (Number(e.weekly_target) || 50) - (Number(e.weekly_orders) || 0))
+          }
+        }));
+
+        // 2. Orders
+        next.orders = (orders || []).map((o) => ({
+          id: o.id,
+          executiveId: o.executive_id,
+          executiveName: o.executive_name,
+          customerName: o.customer_name,
+          customerPhone: o.customer_phone,
+          dropArea: o.drop_area,
+          pickupArea: o.pickup_area,
+          distanceKm: Number(o.distance_km) || 0,
+          itemsCount: Number(o.items_count) || 1,
+          orderType: o.order_type,
+          basePay: Number(o.base_pay) || 80,
+          surgePay: Number(o.surge_pay) || 0,
+          tip: Number(o.tip) || 0,
+          earnings: Number(o.earnings) || 80,
+          status: o.status || 'Completed',
+          orderDate: o.order_date,
+          orderTime: o.order_time
+        }));
+
+        // 3. Notifications
+        next.notifications = (notifs || []).map((n) => ({
+          id: n.id,
+          recipientExecutiveId: n.recipient_executive_id || 'all',
+          title: n.title,
+          message: n.message,
+          tag: n.tag || 'General',
+          emoji: n.emoji || '📢',
+          actionUrl: n.action_url || '/app/dashboard',
+          isRead: Boolean(n.is_read),
+          timestamp: n.timestamp
+        }));
+
+        // 4. Tickets
+        next.tickets = (tickets || []).map((t) => ({
+          id: t.id,
+          executiveId: t.executive_id,
+          executiveName: t.executive_name,
+          subject: t.subject,
+          category: t.category,
+          priority: t.priority,
+          status: t.status,
+          description: t.description,
+          messages: t.messages || [],
+          createdAt: t.created_at
+        }));
+
+        // 5. Payouts
+        if (payouts && payouts.length > 0) {
+          next.earnings.payoutHistory = payouts.map((p) => ({
+            id: p.id,
+            date: p.payout_date,
+            cycle: p.cycle_name,
+            amount: Number(p.net_amount) || 0,
+            status: p.status,
+            utr: p.utr,
+            expectedDate: p.expected_date
+          }));
+        } else {
+          next.earnings.payoutHistory = [];
+        }
+
+        // 6. Milestones
+        if (milestones && milestones.length > 0) {
+          const activeMs = milestones[0];
+          next.milestone = {
+            ...next.milestone,
+            id: activeMs.id,
+            title: activeMs.title,
+            targetOrders: Number(activeMs.target_orders) || 50,
+            completedOrders: Number(activeMs.completed_orders) || 0,
+            reward: activeMs.reward_text || `₹${activeMs.reward_amount} Bonus`,
+            rewardAmount: Number(activeMs.reward_amount) || 500,
+            status: activeMs.status,
+            period: activeMs.period,
+            deadline: activeMs.deadline,
+            tiers: activeMs.tiers || []
+          };
+        }
+
+        // 7. Rewards
+        if (rewards && rewards.length > 0) {
+          next.rewards.items = rewards.map((r) => ({
+            id: r.id,
+            title: r.title,
+            category: r.category,
+            pointsCost: Number(r.points_cost) || 100,
+            discountValue: r.discount_value,
+            imageUrl: r.image_url,
+            isAvailable: Boolean(r.is_available),
+            stockCount: Number(r.stock_count) || 0
+          }));
+        } else {
+          next.rewards.items = [];
+        }
+
+        // 8. Referrals
+        if (referrals && referrals.length > 0) {
+          next.referrals.invitedCandidates = referrals.map((ref) => ({
+            id: ref.id,
+            candidateName: ref.candidate_name,
+            mobile: ref.mobile,
+            city: ref.city,
+            status: ref.status,
+            rewardAmount: Number(ref.reward_amount) || 300,
+            ordersCompleted: Number(ref.orders_completed) || 0,
+            targetOrders: Number(ref.target_orders) || 25
+          }));
+          next.referrals.stats.totalReferrals = referrals.length;
+          next.referrals.stats.joined = referrals.filter((r) => r.status === 'Joined' || r.status === 'Target Reached').length;
+          next.referrals.stats.earnings = referrals.filter((r) => r.status === 'Bonus Paid').length * 300;
+        } else {
+          next.referrals.invitedCandidates = [];
+        }
+
+        next.lastUpdated = new Date().toISOString();
+        return next;
+      });
+    } catch (err) {
+      console.warn("Supabase sync exception:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    syncSupabaseLive();
+
+    let channel = null;
+    if (isSupabaseConfigured) {
+      try {
+        channel = supabase
+          .channel('public-realtime-stream')
+          .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+            if (isMounted) syncSupabaseLive();
+          })
+          .subscribe();
+      } catch (e) { }
+    }
+
+    return () => {
+      isMounted = false;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [syncSupabaseLive]);
 
   // -------------------------------------------------------------
   // Executive Helpers & Mutations
   // -------------------------------------------------------------
-  const getExecutive = (id = "EXE12345") => {
-    return data.executives.find((e) => e.id === id) || data.executives[0];
-  };
+  const getExecutive = useCallback((id = "EXE12345") => {
+    const cleanId = String(id || '').trim().toLowerCase();
+    const found = data.executives.find((e) => {
+      if (e.id?.toLowerCase() === cleanId) return true;
+      if (e.email?.toLowerCase() === cleanId) return true;
+      const cleanPhone = e.mobile?.replace(/\D/g, '');
+      const searchPhone = cleanId.replace(/\D/g, '');
+      if (searchPhone && cleanPhone && cleanPhone === searchPhone) return true;
+      return false;
+    });
+
+    return (
+      found ||
+      data.executives[0] || {
+        id: id || "EXE12345",
+        name: "Delivery Executive",
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        mobile: "+91 9876543210",
+        email: "executive@dropyhub.com",
+        city: "Nellore",
+        zone: "Nellore Central Hub (Zone 3)",
+        kycStatus: "Verified",
+        accountStatus: "Active",
+        rating: 5.0,
+        totalDeliveriesLifetime: 0,
+        vehicleInfo: {
+          type: "Two Wheeler (Bike)",
+          model: "Honda Activa 6G",
+          regNumber: "AP 26 BP 4589"
+        },
+        payoutAccount: {
+          bankName: "State Bank of India",
+          accountNumberMasked: "•••• 4589"
+        },
+        stats: {
+          weeklyOrders: 0,
+          weeklyTarget: 50,
+          weeklyEarnings: 0,
+          deliveryEarnings: 0,
+          bonusEarnings: 0,
+          referralEarnings: 0,
+          totalEarnings: 0,
+          rank: 1,
+          progressPercentage: 0,
+          remainingOrders: 50
+        }
+      }
+    );
+  }, [data.executives]);
 
   const updateExecutive = (id, updates) => {
     setData((prev) => {
       const updatedExecutives = prev.executives.map((exec) => {
         if (exec.id === id) {
           const newStats = updates.stats ? { ...exec.stats, ...updates.stats } : exec.stats;
-          
-          // Auto recalculate progress % and remaining orders if weeklyOrders or weeklyTarget updated
           if (newStats) {
             const orders = newStats.weeklyOrders ?? exec.stats.weeklyOrders;
             const target = newStats.weeklyTarget ?? exec.stats.weeklyTarget;
             newStats.progressPercentage = Math.min(100, Math.round((orders / target) * 100));
             newStats.remainingOrders = Math.max(0, target - orders);
           }
-
           return {
             ...exec,
             ...updates,
@@ -96,24 +403,14 @@ export function DataProvider({ children }) {
         return exec;
       });
 
-      // If Rahul Sharma (EXE12345) milestone orders updated, also sync milestone state
-      let updatedMilestone = { ...prev.milestone };
-      if (id === "EXE12345" && updates.stats?.weeklyOrders !== undefined) {
-        const completed = updates.stats.weeklyOrders;
-        const target = updates.stats.weeklyTarget ?? updatedMilestone.targetOrders;
-        updatedMilestone.completedOrders = completed;
-        updatedMilestone.targetOrders = target;
-        updatedMilestone.percentage = Math.min(100, Math.round((completed / target) * 100));
-        updatedMilestone.remainingOrders = Math.max(0, target - completed);
-      }
-
       return {
         ...prev,
         executives: updatedExecutives,
-        milestone: updatedMilestone,
         lastUpdated: new Date().toISOString()
       };
     });
+
+    supabaseService.updateExecutive(id, updates).catch((e) => console.warn(e));
   };
 
   const addExecutive = (execData) => {
@@ -123,46 +420,28 @@ export function DataProvider({ children }) {
     const deliveryEarnings = Number(execData.deliveryEarnings) || (weeklyOrders * 100);
     const bonusEarnings = Number(execData.bonusEarnings) || 0;
     const weeklyEarnings = deliveryEarnings + bonusEarnings;
-    const progressPercentage = Math.min(100, Math.round((weeklyOrders / weeklyTarget) * 100));
-
-    const avatarPool = [
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop&q=80"
-    ];
-    const randomAvatar = avatarPool[Math.floor(Math.random() * avatarPool.length)];
 
     const newExecutive = {
       id: newId,
       name: execData.name || "New Candidate",
-      avatar: execData.avatar || randomAvatar,
+      avatar: execData.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
       mobile: execData.mobile?.startsWith('+91') ? execData.mobile : `+91 ${execData.mobile?.replace(/^\+91\s*/, '') || '9876543210'}`,
       email: execData.email || `${execData.name?.toLowerCase().replace(/\s+/g, '.') || 'candidate'}@dropyhub.com`,
       city: execData.city || "Nellore",
       zone: execData.zone || "Nellore Central Hub (Zone 3)",
-      dob: execData.dob || "15 Jun 1998",
-      bloodGroup: execData.bloodGroup || "O+",
-      emergencyContact: execData.emergencyContact || "+91 9876543210 (Family)",
-      joiningDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       kycStatus: execData.kycStatus || "Verified",
       accountStatus: execData.accountStatus || "Active",
-      rating: Number(execData.rating) || 4.9,
+      rating: Number(execData.rating) || 5.0,
       totalDeliveriesLifetime: weeklyOrders,
       vehicleInfo: {
         type: execData.vehicleType || "Two Wheeler (Bike)",
         model: execData.vehicleModel || "Honda Activa 6G",
         regNumber: execData.vehicleRegNumber || "AP 26 AB 1234",
-        fuelType: execData.fuelType || "Petrol",
-        insuranceExpiry: "31 Dec 2026"
+        license: execData.drivingLicense || ""
       },
-      drivingLicense: execData.drivingLicense || `DL-04202400${Math.floor(1000 + Math.random() * 9000)}`,
       payoutAccount: {
         bankName: execData.bankName || "State Bank of India",
-        accountNumberMasked: "•••• •••• •••• 4412",
-        ifsc: "SBIN0004561",
-        upiId: `${execData.name?.toLowerCase().replace(/\s+/g, '') || 'candidate'}@oksbi`
+        accountNumberMasked: "•••• 4412"
       },
       stats: {
         weeklyOrders: weeklyOrders,
@@ -172,13 +451,9 @@ export function DataProvider({ children }) {
         bonusEarnings: bonusEarnings,
         referralEarnings: 0,
         totalEarnings: weeklyEarnings,
-        rank: (data.executives?.length || 5) + 1,
-        progressPercentage: progressPercentage,
-        remainingOrders: Math.max(0, weeklyTarget - weeklyOrders),
-        nextReward: "₹500 Bonus",
-        completedOrders: weeklyOrders,
-        cancelledOrders: 0,
-        underReviewOrders: 0
+        rank: (data.executives?.length || 0) + 1,
+        progressPercentage: Math.min(100, Math.round((weeklyOrders / weeklyTarget) * 100)),
+        remainingOrders: Math.max(0, weeklyTarget - weeklyOrders)
       }
     };
 
@@ -187,6 +462,8 @@ export function DataProvider({ children }) {
       executives: [newExecutive, ...prev.executives],
       lastUpdated: new Date().toISOString()
     }));
+
+    supabaseService.addExecutive(newExecutive).catch((e) => console.warn(e));
 
     return newExecutive;
   };
@@ -197,6 +474,8 @@ export function DataProvider({ children }) {
       executives: prev.executives.filter((e) => e.id !== id),
       lastUpdated: new Date().toISOString()
     }));
+
+    supabaseService.deleteExecutive(id).catch((e) => console.warn(e));
   };
 
   // -------------------------------------------------------------
@@ -212,85 +491,42 @@ export function DataProvider({ children }) {
       orderDate: orderData.orderDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       orderTime: orderData.orderTime || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
       customerName: orderData.customerName || "Customer",
+      customerPhone: orderData.customerPhone || null,
       dropArea: orderData.dropArea || "Central Nellore",
-      distanceKm: orderData.distanceKm || 3.5,
-      itemsCount: orderData.itemsCount || 2,
+      pickupArea: orderData.pickupArea || "Nellore Central Hub",
+      distanceKm: Number(orderData.distanceKm) || 0,
+      itemsCount: Number(orderData.itemsCount) || 1,
       orderType: orderData.orderType || "Standard Delivery",
       basePay: Number(orderData.basePay) || 80,
-      surgePay: Number(orderData.surgePay) || 20,
+      surgePay: Number(orderData.surgePay) || 0,
       tip: Number(orderData.tip) || 0,
-      earnings: (Number(orderData.basePay) || 80) + (Number(orderData.surgePay) || 20) + (Number(orderData.tip) || 0),
+      earnings: (Number(orderData.basePay) || 80) + (Number(orderData.surgePay) || 0) + (Number(orderData.tip) || 0),
       status: orderData.status || "Completed",
-      ratingGiven: 5,
-      deliveredAt: orderData.status === "Completed" ? (orderData.deliveredAt || "Just now") : null,
-      timeline: [
-        { step: "Order Assigned", time: "Assigned", completed: true },
-        { step: "Picked from Hub", time: "Picked", completed: true },
-        { step: "Delivered to Customer", time: "Delivered", completed: orderData.status === "Completed" }
-      ],
       executiveId: orderData.executiveId || "EXE12345",
       executiveName: orderData.executiveName || "Rahul Sharma"
     };
 
-    setData((prev) => {
-      const updatedOrders = [newOrder, ...prev.orders];
+    setData((prev) => ({
+      ...prev,
+      orders: [newOrder, ...prev.orders],
+      lastUpdated: new Date().toISOString()
+    }));
 
-      // Auto update executive stats if completed
-      const exec = prev.executives.find((e) => e.id === newOrder.executiveId);
-      let updatedExecutives = prev.executives;
-      if (exec && newOrder.status === "Completed") {
-        const newWeeklyOrders = (exec.stats.weeklyOrders || 0) + 1;
-        const newDeliveryEarnings = (exec.stats.deliveryEarnings || 0) + newOrder.earnings;
-        const newTotalEarnings = (exec.stats.totalEarnings || 0) + newOrder.earnings;
-        
-        updatedExecutives = prev.executives.map((e) => {
-          if (e.id === exec.id) {
-            return {
-              ...e,
-              stats: {
-                ...e.stats,
-                weeklyOrders: newWeeklyOrders,
-                completedOrders: (e.stats.completedOrders || 0) + 1,
-                deliveryEarnings: newDeliveryEarnings,
-                weeklyEarnings: (e.stats.weeklyEarnings || 0) + newOrder.earnings,
-                totalEarnings: newTotalEarnings,
-                progressPercentage: Math.min(100, Math.round((newWeeklyOrders / (e.stats.weeklyTarget || 50)) * 100)),
-                remainingOrders: Math.max(0, (e.stats.weeklyTarget || 50) - newWeeklyOrders)
-              }
-            };
-          }
-          return e;
-        });
-      }
+    supabaseService.createOrder(newOrder).catch((e) => console.warn(e));
 
-      return {
-        ...prev,
-        orders: updatedOrders,
-        executives: updatedExecutives,
-        lastUpdated: new Date().toISOString()
-      };
-    });
     return newOrder;
   };
 
   const updateOrder = (orderId, updates) => {
-    setData((prev) => {
-      const updatedOrders = prev.orders.map((ord) => {
-        if (ord.id === orderId) {
-          const merged = { ...ord, ...updates };
-          if (updates.basePay !== undefined || updates.surgePay !== undefined || updates.tip !== undefined) {
-            merged.earnings = (Number(merged.basePay) || 0) + (Number(merged.surgePay) || 0) + (Number(merged.tip) || 0);
-          }
-          return merged;
-        }
-        return ord;
-      });
-      return {
-        ...prev,
-        orders: updatedOrders,
-        lastUpdated: new Date().toISOString()
-      };
-    });
+    setData((prev) => ({
+      ...prev,
+      orders: prev.orders.map((o) => (o.id === orderId ? { ...o, ...updates } : o)),
+      lastUpdated: new Date().toISOString()
+    }));
+
+    if (updates.status) {
+      supabaseService.updateOrderStatus(orderId, updates.status).catch((e) => console.warn(e));
+    }
   };
 
   const deleteOrder = (orderId) => {
@@ -305,128 +541,59 @@ export function DataProvider({ children }) {
   // Earnings Mutations
   // -------------------------------------------------------------
   const updateEarnings = (executiveId, earningsUpdates) => {
-    setData((prev) => {
-      const updatedExecutives = prev.executives.map((exec) => {
-        if (exec.id === executiveId) {
-          const stats = {
-            ...exec.stats,
-            deliveryEarnings: earningsUpdates.deliveryEarnings ?? exec.stats.deliveryEarnings,
-            bonusEarnings: earningsUpdates.bonusEarnings ?? exec.stats.bonusEarnings,
-            referralEarnings: earningsUpdates.referralEarnings ?? exec.stats.referralEarnings,
-            weeklyEarnings: (earningsUpdates.deliveryEarnings ?? exec.stats.deliveryEarnings) + (earningsUpdates.bonusEarnings ?? exec.stats.bonusEarnings),
-            totalEarnings: (earningsUpdates.deliveryEarnings ?? exec.stats.deliveryEarnings) + (earningsUpdates.bonusEarnings ?? exec.stats.bonusEarnings) + (earningsUpdates.referralEarnings ?? exec.stats.referralEarnings)
-          };
-          return { ...exec, stats };
-        }
-        return exec;
-      });
-
-      const updatedSummary = {
-        ...prev.earnings.summary,
-        deliveryEarnings: earningsUpdates.deliveryEarnings ?? prev.earnings.summary.deliveryEarnings,
-        bonus: earningsUpdates.bonusEarnings ?? prev.earnings.summary.bonus,
-        referral: earningsUpdates.referralEarnings ?? prev.earnings.summary.referral,
-        total: (earningsUpdates.deliveryEarnings ?? prev.earnings.summary.deliveryEarnings) + (earningsUpdates.bonusEarnings ?? prev.earnings.summary.bonus) + (earningsUpdates.referralEarnings ?? prev.earnings.summary.referral),
-        pendingPayout: (earningsUpdates.deliveryEarnings ?? prev.earnings.summary.deliveryEarnings) + (earningsUpdates.bonusEarnings ?? prev.earnings.summary.bonus) + (earningsUpdates.referralEarnings ?? prev.earnings.summary.referral)
-      };
-
-      return {
-        ...prev,
-        executives: updatedExecutives,
-        earnings: {
-          ...prev.earnings,
-          summary: updatedSummary
-        },
-        lastUpdated: new Date().toISOString()
-      };
+    updateExecutive(executiveId, {
+      stats: earningsUpdates
     });
   };
 
-  const updatePayoutStatus = (payoutId, updates) => {
-    setData((prev) => {
-      const updatedPayouts = prev.earnings.payoutHistory.map((pay) => {
-        if (pay.id === payoutId) {
-          return { ...pay, ...updates };
-        }
-        return pay;
-      });
-      return {
-        ...prev,
-        earnings: {
-          ...prev.earnings,
-          payoutHistory: updatedPayouts
-        },
-        lastUpdated: new Date().toISOString()
-      };
-    });
+  const updatePayoutStatus = (payoutId, payoutUpdates) => {
+    setData((prev) => ({
+      ...prev,
+      earnings: {
+        ...prev.earnings,
+        payoutHistory: prev.earnings.payoutHistory.map((p) => (p.id === payoutId ? { ...p, ...payoutUpdates } : p))
+      },
+      lastUpdated: new Date().toISOString()
+    }));
+
+    supabaseService.updatePayoutStatus(payoutId, payoutUpdates.status, payoutUpdates.utr).catch((e) => console.warn(e));
   };
 
   // -------------------------------------------------------------
   // Milestone Mutations
   // -------------------------------------------------------------
-  const updateMilestone = (updates) => {
-    setData((prev) => {
-      const updatedMilestone = {
-        ...prev.milestone,
-        ...updates
-      };
-      // Auto calc percentage
-      if (updatedMilestone.targetOrders && updatedMilestone.completedOrders !== undefined) {
-        updatedMilestone.percentage = Math.min(100, Math.round((updatedMilestone.completedOrders / updatedMilestone.targetOrders) * 100));
-        updatedMilestone.remainingOrders = Math.max(0, updatedMilestone.targetOrders - updatedMilestone.completedOrders);
-      }
-
-      // Sync to default executive stats (Rahul)
-      const updatedExecutives = prev.executives.map((exec) => {
-        if (exec.id === "EXE12345") {
-          return {
-            ...exec,
-            stats: {
-              ...exec.stats,
-              weeklyOrders: updatedMilestone.completedOrders,
-              weeklyTarget: updatedMilestone.targetOrders,
-              progressPercentage: updatedMilestone.percentage,
-              remainingOrders: updatedMilestone.remainingOrders,
-              nextReward: updatedMilestone.reward
-            }
-          };
-        }
-        return exec;
-      });
-
-      return {
-        ...prev,
-        milestone: updatedMilestone,
-        executives: updatedExecutives,
-        lastUpdated: new Date().toISOString()
-      };
-    });
-  };
-
-  // -------------------------------------------------------------
-  // Contest Mutations
-  // -------------------------------------------------------------
-  const updateContest = (updates) => {
+  const updateMilestone = (milestoneUpdates) => {
     setData((prev) => ({
       ...prev,
-      contest: {
-        ...prev.contest,
-        ...updates
+      milestone: {
+        ...prev.milestone,
+        ...milestoneUpdates
       },
       lastUpdated: new Date().toISOString()
     }));
   };
 
-  // -------------------------------------------------------------
-  // Leaderboard Mutations
-  // -------------------------------------------------------------
-  const updateLeaderboard = (updates) => {
+  const claimMilestoneReward = (milestoneId) => {
     setData((prev) => ({
       ...prev,
-      leaderboard: {
-        ...prev.leaderboard,
-        ...updates
+      milestone: {
+        ...prev.milestone,
+        status: "Claimed",
+        claimedAt: new Date().toISOString()
       },
+      lastUpdated: new Date().toISOString()
+    }));
+
+    supabaseService.claimMilestone(milestoneId).catch((e) => console.warn(e));
+  };
+
+  // -------------------------------------------------------------
+  // Contest Mutations
+  // -------------------------------------------------------------
+  const updateContest = (contestUpdates) => {
+    setData((prev) => ({
+      ...prev,
+      contest: { ...prev.contest, ...contestUpdates },
       lastUpdated: new Date().toISOString()
     }));
   };
@@ -434,141 +601,93 @@ export function DataProvider({ children }) {
   // -------------------------------------------------------------
   // Rewards Mutations
   // -------------------------------------------------------------
-  const updateReward = (rewardId, updates) => {
-    setData((prev) => {
-      const updatedCash = prev.rewards.cashRewards.map((r) => (r.id === rewardId ? { ...r, ...updates } : r));
-      const updatedPhysical = prev.rewards.physicalRewards.map((r) => (r.id === rewardId ? { ...r, ...updates } : r));
-      return {
-        ...prev,
-        rewards: {
-          ...prev.rewards,
-          cashRewards: updatedCash,
-          physicalRewards: updatedPhysical
-        },
-        lastUpdated: new Date().toISOString()
-      };
-    });
+  const redeemReward = (rewardId, pointsCost) => {
+    setData((prev) => ({
+      ...prev,
+      rewards: {
+        ...prev.rewards,
+        userPoints: Math.max(0, (prev.rewards.userPoints || 0) - pointsCost)
+      },
+      lastUpdated: new Date().toISOString()
+    }));
   };
 
-  const claimReward = (rewardId, addressDetails) => {
-    setData((prev) => {
-      const updatedCash = prev.rewards.cashRewards.map((r) => {
-        if (r.id === rewardId) {
-          return { ...r, status: "Claimed", canClaim: false, claimedDate: "Today" };
-        }
-        return r;
-      });
-
-      const updatedPhysical = prev.rewards.physicalRewards.map((r) => {
-        if (r.id === rewardId) {
-          return {
-            ...r,
-            status: "Claimed",
-            canClaim: false,
-            claimedDate: "Today",
-            deliveryStatus: "Processing for Dispatch",
-            shippingAddress: addressDetails
-          };
-        }
-        return r;
-      });
-
-      // Add a confirmation notification
-      const newNotif = {
-        id: `notif-reward-${Date.now()}`,
-        type: "bonus",
-        emoji: "🎁",
-        title: "Reward Claim Submitted!",
-        message: "Your reward claim request has been registered and is being processed by the Hub Manager.",
-        timeAgo: "Just now",
-        date: "Today",
-        isRead: false,
-        actionUrl: "/app/rewards",
-        tag: "Reward"
-      };
-
-      return {
-        ...prev,
-        rewards: {
-          ...prev.rewards,
-          cashRewards: updatedCash,
-          physicalRewards: updatedPhysical
-        },
-        notifications: [newNotif, ...prev.notifications],
-        lastUpdated: new Date().toISOString()
-      };
-    });
+  const updateReward = (rewardId, rewardUpdates) => {
+    setData((prev) => ({
+      ...prev,
+      rewards: {
+        ...prev.rewards,
+        items: prev.rewards.items.map((r) => (r.id === rewardId ? { ...r, ...rewardUpdates } : r))
+      },
+      lastUpdated: new Date().toISOString()
+    }));
   };
 
   // -------------------------------------------------------------
   // Referral Mutations
   // -------------------------------------------------------------
-  const updateReferral = (referralId, updates) => {
-    setData((prev) => {
-      const updatedList = prev.referrals.referralsList.map((ref) => {
-        if (ref.id === referralId) {
-          return { ...ref, ...updates };
-        }
-        return ref;
-      });
+  const addReferral = (referral) => {
+    const newRef = {
+      id: referral.id || `REF${Math.floor(1000 + Math.random() * 9000)}`,
+      candidateName: referral.candidateName || referral.name,
+      mobile: referral.mobile,
+      city: referral.city || "Nellore",
+      status: "Invited",
+      rewardAmount: 300,
+      ordersCompleted: 0,
+      targetOrders: 25
+    };
 
-      // Recalculate stats
-      const successful = updatedList.filter((r) => r.status === "Successful").length;
-      const pending = updatedList.filter((r) => r.status !== "Successful").length;
-      const totalEarned = successful * 300;
+    setData((prev) => ({
+      ...prev,
+      referrals: {
+        ...prev.referrals,
+        invitedCandidates: [newRef, ...(prev.referrals.invitedCandidates || [])]
+      },
+      lastUpdated: new Date().toISOString()
+    }));
 
-      return {
-        ...prev,
-        referrals: {
-          ...prev.referrals,
-          stats: {
-            ...prev.referrals.stats,
-            successful,
-            pending,
-            totalEarned
-          },
-          referralsList: updatedList
-        },
-        lastUpdated: new Date().toISOString()
-      };
-    });
+    supabaseService.createReferral(newRef).catch((e) => console.warn(e));
   };
 
   // -------------------------------------------------------------
   // Notification Mutations
   // -------------------------------------------------------------
-  const addNotification = (notifData) => {
-    const newNotif = {
-      id: notifData.id || `notif-${Date.now()}`,
-      type: notifData.type || "system",
-      emoji: notifData.emoji || "📢",
-      title: notifData.title || "New Announcement",
-      message: notifData.message || "",
-      timeAgo: "Just now",
-      date: "Today",
+  const addNotification = (notif) => {
+    const newNotification = {
+      id: `NOTIF${Date.now()}`,
+      title: notif.title,
+      message: notif.message,
+      timestamp: "Just now",
       isRead: false,
-      actionUrl: notifData.actionUrl || "/app/dashboard",
-      tag: notifData.tag || "General",
-      recipientExecutiveId: notifData.recipientExecutiveId || "all"
+      tag: notif.tag || "General",
+      emoji: notif.emoji || "📢",
+      actionUrl: notif.actionUrl || "/app/dashboard",
+      recipientExecutiveId: notif.recipientExecutiveId || "all"
     };
 
     setData((prev) => ({
       ...prev,
-      notifications: [newNotif, ...prev.notifications],
+      notifications: [newNotification, ...prev.notifications],
       lastUpdated: new Date().toISOString()
     }));
-    return newNotif;
+
+    supabaseService.createNotification(newNotification).catch((e) => console.warn(e));
+
+    return newNotification;
   };
 
-  const markNotificationRead = (notifId) => {
+  const markNotificationAsRead = (id) => {
     setData((prev) => ({
       ...prev,
-      notifications: prev.notifications.map((n) => (n.id === notifId ? { ...n, isRead: true } : n)),
+      notifications: prev.notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       lastUpdated: new Date().toISOString()
     }));
+
+    supabaseService.markNotificationRead(id).catch((e) => console.warn(e));
   };
 
-  const markAllNotificationsRead = () => {
+  const markAllNotificationsAsRead = () => {
     setData((prev) => ({
       ...prev,
       notifications: prev.notifications.map((n) => ({ ...n, isRead: true })),
@@ -581,29 +700,22 @@ export function DataProvider({ children }) {
   // -------------------------------------------------------------
   const createTicket = (ticketData) => {
     const newTicket = {
-      id: `TKT${Math.floor(1000 + Math.random() * 9000)}`,
-      category: ticketData.category || "Order Issue",
-      subject: ticketData.subject || "Support Query",
-      description: ticketData.description || "",
-      status: "Open",
+      id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`,
+      category: ticketData.category || "General",
+      subject: ticketData.subject,
+      description: ticketData.description,
       priority: ticketData.priority || "Medium",
-      createdAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ", " + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      updatedAt: "Just now",
+      status: "Open",
+      createdAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       executiveId: ticketData.executiveId || "EXE12345",
-      executiveName: ticketData.executiveName || "Rahul Sharma",
+      executiveName: ticketData.executiveName || "Delivery Executive",
       messages: [
         {
           sender: "user",
-          senderName: ticketData.executiveName || "Rahul Sharma",
-          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+          senderName: ticketData.executiveName || "Delivery Executive",
+          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
           message: ticketData.description,
-          time: "Just now"
-        },
-        {
-          sender: "system",
-          senderName: "Support Bot",
-          message: `Your ticket has been logged and assigned to Hub Management. A manager will review your query shortly.`,
-          time: "Just now"
+          timestamp: "Just now"
         }
       ]
     };
@@ -613,68 +725,57 @@ export function DataProvider({ children }) {
       tickets: [newTicket, ...prev.tickets],
       lastUpdated: new Date().toISOString()
     }));
+
+    supabaseService.createTicket(newTicket).catch((e) => console.warn(e));
+
     return newTicket;
   };
 
-  const replyTicket = (ticketId, reply) => {
-    setData((prev) => {
-      const updatedTickets = prev.tickets.map((t) => {
-        if (t.id === ticketId) {
-          const newMsg = {
-            sender: reply.sender || "agent",
-            senderName: reply.senderName || "Hub Manager",
-            avatar: reply.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80",
-            message: reply.message,
-            time: "Just now"
-          };
-          return {
-            ...t,
-            status: reply.status || t.status,
-            updatedAt: "Just now",
-            messages: [...t.messages, newMsg]
-          };
-        }
-        return t;
-      });
+  const replyTicket = (ticketId, replyObj) => {
+    const newMsg = {
+      sender: replyObj.sender || "user",
+      senderName: replyObj.senderName,
+      avatar: replyObj.avatar || (replyObj.sender === 'user' ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" : null),
+      message: replyObj.message,
+      timestamp: "Just now"
+    };
 
-      return {
-        ...prev,
-        tickets: updatedTickets,
-        lastUpdated: new Date().toISOString()
-      };
-    });
-  };
-
-  const updateTicketStatus = (ticketId, status, priority) => {
     setData((prev) => ({
       ...prev,
       tickets: prev.tickets.map((t) => {
         if (t.id === ticketId) {
+          const updatedMessages = [...(t.messages || []), newMsg];
+          const newStatus = replyObj.status || (replyObj.sender === 'agent' ? 'In Progress' : t.status);
           return {
             ...t,
-            status: status || t.status,
-            priority: priority || t.priority,
-            updatedAt: "Just now"
+            status: newStatus,
+            messages: updatedMessages
           };
         }
         return t;
       }),
       lastUpdated: new Date().toISOString()
     }));
+
+    supabaseService.addTicketMessage(ticketId, newMsg).catch((e) => console.warn(e));
   };
 
-  // -------------------------------------------------------------
-  // Reset
-  // -------------------------------------------------------------
-  const resetToDefaults = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    window.location.reload();
+  const updateTicketStatus = (ticketId, newStatus) => {
+    setData((prev) => ({
+      ...prev,
+      tickets: prev.tickets.map((t) => (t.id === ticketId ? { ...t, status: newStatus } : t)),
+      lastUpdated: new Date().toISOString()
+    }));
+
+    supabaseService.updateTicket(ticketId, { status: newStatus }).catch((e) => console.warn(e));
   };
 
   return (
     <DataContext.Provider
       value={{
         data,
+        isLoading,
+        syncSupabaseLive,
         getExecutive,
         updateExecutive,
         addExecutive,
@@ -686,18 +787,17 @@ export function DataProvider({ children }) {
         updateEarnings,
         updatePayoutStatus,
         updateMilestone,
+        claimMilestoneReward,
         updateContest,
-        updateLeaderboard,
+        redeemReward,
         updateReward,
-        claimReward,
-        updateReferral,
+        addReferral,
         addNotification,
-        markNotificationRead,
-        markAllNotificationsRead,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
         createTicket,
         replyTicket,
         updateTicketStatus,
-        resetToDefaults,
         supportCategories
       }}
     >

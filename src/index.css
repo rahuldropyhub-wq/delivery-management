@@ -45,7 +45,7 @@
   
   /* Safe padding for notch and bottom bar */
   .pb-safe {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .pt-safe {
     padding-top: env(safe-area-inset-top, 0px);

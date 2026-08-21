@@ -59,15 +59,30 @@ export default function EarningsPage() {
   const { uiStateMode, setUiStateMode, activeExecutiveId } = useAuth();
   const { data: globalData, getExecutive } = useData();
   const user = getExecutive(activeExecutiveId);
-  const earningsSummary = globalData.earnings.summary;
-  const payoutHistory = globalData.earnings.payoutHistory;
-  const dailyEarningsBreakdown = globalData.earnings.dailyBreakdown;
-  const earningsChartData = globalData.earnings.chartData;
+  const earningsSummary = globalData?.earnings?.summary || { total: 0, deliveryEarnings: 0, bonus: 0, referral: 0, currentCycle: "Active Week", nextPayoutDate: "Upcoming Sunday" };
+  const payoutHistory = globalData?.earnings?.payoutHistory || [];
+  const dailyEarningsBreakdown = globalData?.earnings?.dailyBreakdown || [];
+  const earningsChartData = globalData?.earnings?.chartData || {};
 
   const [selectedPeriod, setSelectedPeriod] = useState("thisWeek");
 
-  const chartData = earningsChartData[selectedPeriod] || earningsChartData.thisWeek;
-  const currentTotal = chartData.reduce((acc, curr) => acc + curr.earnings, 0);
+  const defaultWeekly = [
+    { label: "Mon", earnings: 0, orders: 0 },
+    { label: "Tue", earnings: 0, orders: 0 },
+    { label: "Wed", earnings: 0, orders: 0 },
+    { label: "Thu", earnings: 0, orders: 0 },
+    { label: "Fri", earnings: 0, orders: 0 },
+    { label: "Sat", earnings: 0, orders: 0 },
+    { label: "Sun", earnings: 0, orders: 0 }
+  ];
+
+  const chartData = Array.isArray(earningsChartData)
+    ? (earningsChartData.length > 0 ? earningsChartData : defaultWeekly)
+    : (earningsChartData[selectedPeriod] || earningsChartData.thisWeek || defaultWeekly);
+
+  const currentTotal = Array.isArray(chartData)
+    ? chartData.reduce((acc, curr) => acc + (Number(curr?.earnings) || 0), 0)
+    : 0;
 
   if (uiStateMode === 'loading') {
     return (

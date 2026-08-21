@@ -37,10 +37,25 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function EarningsPreviewChart({ className = "" }) {
   const [period, setPeriod] = useState("thisWeek");
   const { data: globalData } = useData();
-  const chartData = globalData.earnings.chartData;
-  const currentChartData = chartData[period] || chartData.thisWeek;
+  const chartData = globalData?.earnings?.chartData || {};
 
-  const totalPeriodEarnings = currentChartData.reduce((acc, curr) => acc + curr.earnings, 0);
+  const defaultWeekly = [
+    { label: "Mon", earnings: 0, orders: 0 },
+    { label: "Tue", earnings: 0, orders: 0 },
+    { label: "Wed", earnings: 0, orders: 0 },
+    { label: "Thu", earnings: 0, orders: 0 },
+    { label: "Fri", earnings: 0, orders: 0 },
+    { label: "Sat", earnings: 0, orders: 0 },
+    { label: "Sun", earnings: 0, orders: 0 }
+  ];
+
+  const currentChartData = Array.isArray(chartData)
+    ? (chartData.length > 0 ? chartData : defaultWeekly)
+    : (chartData[period] || chartData.thisWeek || defaultWeekly);
+
+  const totalPeriodEarnings = Array.isArray(currentChartData)
+    ? currentChartData.reduce((acc, curr) => acc + (Number(curr?.earnings) || 0), 0)
+    : 0;
 
   return (
     <div className={`bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-card ${className}`}>

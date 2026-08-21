@@ -25,7 +25,7 @@ export default function DevStateSwitcher() {
   ];
 
   return (
-    <div className="fixed bottom-20 sm:bottom-6 right-3 sm:right-6 z-40">
+    <div className="hidden lg:block fixed bottom-6 right-6 z-40">
       <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-xl overflow-hidden transition-all text-xs">
         <button
           onClick={() => setIsExpanded(!isExpanded)}

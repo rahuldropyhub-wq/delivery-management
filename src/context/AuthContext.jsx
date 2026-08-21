@@ -153,6 +153,7 @@ export function AuthProvider({ children }) {
         setIsManagerAuthenticated(true);
         setRole('manager');
       } else {
+        setActiveExecutiveId(targetEmail);
         setIsAuthenticated(true);
         setRole('executive');
       }
@@ -179,6 +180,7 @@ export function AuthProvider({ children }) {
           setIsManagerAuthenticated(true);
           setRole('manager');
         } else {
+          setActiveExecutiveId(targetEmail);
           setIsAuthenticated(true);
           setRole('executive');
         }

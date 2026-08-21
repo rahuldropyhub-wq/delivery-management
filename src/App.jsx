@@ -52,7 +52,7 @@ function RootRedirect() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <DataProvider>
         <AuthProvider>
           <ToastProvider>
@@ -120,8 +120,12 @@ export default function App() {
               {/* 404 Catch-All */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
-            <Analytics />
-            <SpeedInsights />
+            {import.meta.env.PROD && (
+              <>
+                <Analytics />
+                <SpeedInsights />
+              </>
+            )}
           </ToastProvider>
         </AuthProvider>
       </DataProvider>

@@ -11,7 +11,7 @@ export default function MobileHeader({ onOpenMenu }) {
   const unreadCount = data.notifications.filter((n) => !n.isRead).length;
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between lg:hidden pt-safe">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 pt-4 pb-3 flex items-center justify-between lg:hidden shadow-xs">
       <div className="flex items-center gap-2.5">
         <button
           onClick={onOpenMenu}

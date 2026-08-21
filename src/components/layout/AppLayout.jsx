@@ -32,7 +32,7 @@ export default function AppLayout() {
         <DesktopHeader />
 
         {/* Dynamic Page Outlet with smooth fade transition */}
-        <main className="flex-1 pb-24 lg:pb-12 px-4 sm:px-6 lg:px-8 py-5 max-w-7xl w-full mx-auto">
+        <main className="flex-1 pt-3 pb-20 sm:py-5 lg:pb-12 px-3.5 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
