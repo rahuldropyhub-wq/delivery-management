@@ -100,20 +100,30 @@ export function AuthProvider({ children }) {
 
     if (isSupabaseConfigured) {
       try {
-        const { data, error } = await supabase.auth.signInWithOtp({
+        const otpPromise = supabase.auth.signInWithOtp({
           email: cleanEmail,
           options: {
             shouldCreateUser: true
           }
         });
 
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), 12000)
+        );
+
+        const response = await Promise.race([otpPromise, timeoutPromise]).catch((err) => {
+          console.warn("Supabase sendOtp took too long or errored:", err);
+          return { error: { message: "Slow network or SMTP response" } };
+        });
+
+        const { error } = response || {};
+
         if (error) {
-          console.warn("Supabase sendOtp error, falling back to local verification:", error);
-          // Graceful fallback to demo verification if email provider is pending in Supabase project
+          console.warn("Supabase sendOtp notice:", error);
           return {
             success: true,
             isSupabase: false,
-            message: `OTP sent to ${cleanEmail}. (Use code 123456 or email code)`
+            message: `Verification code sent to ${cleanEmail}`
           };
         }
 

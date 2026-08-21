@@ -171,16 +171,6 @@ export default function OtpVerificationPage() {
               )}
             </div>
 
-            {/* Quick Demo Fill Helper */}
-            <button
-              type="button"
-              onClick={handleQuickFillDemo}
-              className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 bg-brand-50/80 hover:bg-brand-50 px-3 py-2 rounded-xl transition-colors flex items-center justify-center gap-1.5 w-full"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Click to Fill Demo OTP: <strong>123456</strong></span>
-            </button>
-
             {/* Submit Button */}
             <button
               type="submit"

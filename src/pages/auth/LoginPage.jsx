@@ -102,16 +102,6 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Quick Demo Fill Pill */}
-            <button
-              type="button"
-              onClick={handleQuickFill}
-              className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 bg-brand-50/80 hover:bg-brand-50 px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1 w-full justify-center"
-            >
-              <Sparkles className="w-3 h-3" />
-              <span>Auto-Fill Demo: rahul.sharma@deliverypro.in</span>
-            </button>
-
             <button
               type="submit"
               disabled={isLoading}
