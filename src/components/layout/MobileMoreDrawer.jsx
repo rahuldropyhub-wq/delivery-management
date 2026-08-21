@@ -11,15 +11,14 @@ import {
   Headphones,
   LogOut,
   ChevronRight,
-  ShieldCheck,
-  Building2
+  ShieldCheck
 } from 'lucide-react';
 import BottomSheet from '../common/BottomSheet';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 
 export default function MobileMoreDrawer({ isOpen, onClose }) {
-  const { activeExecutiveId, logout, switchRole } = useAuth();
+  const { activeExecutiveId, logout } = useAuth();
   const { getExecutive, data } = useData();
   const user = getExecutive(activeExecutiveId);
   const navigate = useNavigate();
@@ -57,12 +56,6 @@ export default function MobileMoreDrawer({ isOpen, onClose }) {
     navigate('/login');
   };
 
-  const handleSwitchToManager = () => {
-    onClose();
-    switchRole('manager', 'Manager 1');
-    navigate('/manager/dashboard');
-  };
-
   return (
     <BottomSheet
       isOpen={isOpen}
@@ -95,17 +88,6 @@ export default function MobileMoreDrawer({ isOpen, onClose }) {
           className="text-xs font-bold text-brand-600 hover:text-brand-700 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm"
         >
           View
-        </button>
-      </div>
-
-      {/* Switch to Manager Panel */}
-      <div className="mb-4">
-        <button
-          onClick={handleSwitchToManager}
-          className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-navy-900 to-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
-        >
-          <Building2 className="w-4 h-4 text-brand-400" />
-          <span>Switch to Manager Portal</span>
         </button>
       </div>
 

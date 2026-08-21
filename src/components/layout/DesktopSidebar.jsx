@@ -13,15 +13,13 @@ import {
   Bell,
   CreditCard,
   Headphones,
-  LogOut,
-  ShieldCheck,
-  Building2
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 
 export default function DesktopSidebar() {
-  const { activeExecutiveId, logout, switchRole } = useAuth();
+  const { activeExecutiveId, logout } = useAuth();
   const { getExecutive, data } = useData();
   const user = getExecutive(activeExecutiveId);
   const navigate = useNavigate();
@@ -45,11 +43,6 @@ export default function DesktopSidebar() {
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleSwitchToManager = () => {
-    switchRole('manager', 'Manager 1');
-    navigate('/manager/dashboard');
   };
 
   return (
@@ -101,16 +94,7 @@ export default function DesktopSidebar() {
         })}
       </div>
 
-      {/* Switch to Manager Shortcut */}
-      <div className="px-3 pb-2">
-        <button
-          onClick={handleSwitchToManager}
-          className="w-full py-2 px-3 rounded-xl bg-navy-800/80 hover:bg-navy-800 text-brand-300 hover:text-white border border-brand-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
-        >
-          <Building2 className="w-4 h-4 text-brand-400" />
-          <span>Go to Manager Panel</span>
-        </button>
-      </div>
+
 
       {/* Bottom Profile / Logout Footer */}
       <div className="p-3 border-t border-navy-800/80 bg-navy-950/40">

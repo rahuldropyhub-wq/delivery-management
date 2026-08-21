@@ -11,7 +11,6 @@ import {
   Edit,
   Save,
   X,
-  ExternalLink,
   Package,
   Wallet,
   Target,
@@ -24,7 +23,6 @@ import {
 
 export default function ManagerExecutivesPage() {
   const { data, updateExecutive, getOrdersForExecutive } = useData();
-  const { switchRole } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -118,10 +116,6 @@ export default function ManagerExecutivesPage() {
     setSearchParams({});
   };
 
-  const handleViewAsExecutive = (execId) => {
-    switchRole('executive', execId);
-    navigate('/app/dashboard');
-  };
 
   return (
     <div className="space-y-6">
@@ -221,22 +215,13 @@ export default function ManagerExecutivesPage() {
             </div>
 
             {/* Actions */}
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+            <div className="mt-4 pt-3 border-t border-slate-100">
               <button
                 onClick={() => handleOpenEdit(exec)}
-                className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Edit className="w-3.5 h-3.5" />
-                <span>Edit Data</span>
-              </button>
-
-              <button
-                onClick={() => handleViewAsExecutive(exec.id)}
-                className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-brand-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-1"
-                title="Switch role and view executive portal"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">View App</span>
+                <span>Edit Executive Data</span>
               </button>
             </div>
           </div>

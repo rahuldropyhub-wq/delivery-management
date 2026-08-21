@@ -96,18 +96,11 @@ export default function ManagerLoginPage() {
             </div>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-slate-700/80 flex items-center justify-between text-xs text-slate-400">
+          <div className="mt-6 pt-5 border-t border-slate-700/80 flex items-center justify-center text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Full Data Management Access</span>
+              <span>Full Data Management & Hub Operations Access</span>
             </span>
-
-            <button
-              onClick={() => navigate('/login')}
-              className="text-brand-400 hover:underline font-semibold"
-            >
-              Executive Login →
-            </button>
           </div>
         </div>
       </div>

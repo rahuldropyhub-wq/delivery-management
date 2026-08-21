@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Clock,
   Sparkles,
-  ExternalLink,
   ShieldCheck,
   CheckCircle2,
   AlertCircle
@@ -23,7 +22,7 @@ import {
 import StatusBadge from '../../components/common/StatusBadge';
 
 export default function ManagerDashboardPage() {
-  const { activeManager, switchRole } = useAuth();
+  const { activeManager } = useAuth();
   const { data } = useData();
   const navigate = useNavigate();
 
@@ -37,11 +36,6 @@ export default function ManagerDashboardPage() {
   const activeExecutivesCount = executives.filter((e) => e.accountStatus === 'Active').length;
   const openTickets = tickets.filter((t) => t.status === 'Open');
   const totalEarningsDistributed = executives.reduce((acc, curr) => acc + (curr.stats?.totalEarnings || 0), 0);
-
-  const handleOpenExecutive = (execId) => {
-    switchRole('executive', execId);
-    navigate('/app/dashboard');
-  };
 
   return (
     <div className="space-y-6">
@@ -64,27 +58,9 @@ export default function ManagerDashboardPage() {
           </p>
         </div>
 
-        {/* Quick Demo Test Card */}
-        <div className="bg-slate-800/90 border border-slate-700 p-4 rounded-2xl text-xs space-y-2 shrink-0">
-          <div className="flex items-center justify-between gap-3">
-            <span className="font-bold text-amber-300 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              Live Data Sync
-            </span>
-            <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded">
-              Active
-            </span>
-          </div>
-          <p className="text-slate-300 text-[11px]">
-            Any update made here immediately updates the executive's view!
-          </p>
-          <button
-            onClick={() => handleOpenExecutive('EXE12345')}
-            className="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
-          >
-            <span>View as Rahul Sharma</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+        <div className="flex items-center gap-2 text-xs bg-slate-800/90 border border-slate-700 px-4 py-3 rounded-2xl">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-slate-200 font-semibold">Live System Status: <strong className="text-emerald-400">Online</strong></span>
         </div>
       </div>
 
