@@ -36,8 +36,8 @@ export default function ManagerLayout() {
 
   const managerLinks = [
     { label: "Overview", path: "/manager/dashboard", icon: LayoutDashboard },
-    { label: "Executives", path: "/manager/executives", icon: Users, badge: `${data.executives?.length || 5}` },
-    { label: "Orders History", path: "/manager/orders", icon: Package, badge: `${data.orders?.length || 0}` },
+    { label: "Executives", path: "/manager/executives", icon: Users, badge: `${data.executives?.length ?? 0}` },
+    { label: "Orders History", path: "/manager/orders", icon: Package, badge: `${data.orders?.length ?? 0}` },
     { label: "Earnings & Payouts", path: "/manager/earnings", icon: Wallet },
     { label: "Milestones", path: "/manager/milestones", icon: Target },
     { label: "Weekly Contest", path: "/manager/contest", icon: Trophy },
@@ -68,7 +68,7 @@ export default function ManagerLayout() {
                 Manager<span className="text-amber-400">Portal</span>
               </span>
               <span className="text-[11px] font-semibold text-slate-400">
-                Nellore Hub Control
+                Hyderabad Hub Control
               </span>
             </div>
           </div>

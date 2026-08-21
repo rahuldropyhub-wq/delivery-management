@@ -43,11 +43,11 @@ export default function ManagerExecutivesPage() {
     name: "",
     mobile: "",
     email: "",
-    city: "Nellore",
-    zone: "Nellore Central Hub (Zone 3)",
+    city: "Hyderabad",
+    zone: "Hyderabad Central Hub (Zone 1 - Hitec City / Madhapur)",
     accountStatus: "Active",
     kycStatus: "Verified",
-    rating: 4.9,
+    rating: 5.0,
     vehicleType: "Two Wheeler (Bike)",
     vehicleModel: "Honda Activa 6G",
     vehicleRegNumber: "",
@@ -158,21 +158,21 @@ export default function ManagerExecutivesPage() {
       name: `Kiran Kumar (${randomNum})`,
       mobile: `98480${randomNum}`,
       email: `kiran.k${randomNum}@dropyhub.com`,
-      city: "Nellore",
-      zone: "Nellore Central Hub (Zone 3)",
+      city: "Hyderabad",
+      zone: "Hyderabad Central Hub (Zone 1 - Hitec City / Madhapur)",
       accountStatus: "Active",
       kycStatus: "Verified",
-      rating: 4.9,
+      rating: 5.0,
       vehicleType: "Two Wheeler (Bike)",
       vehicleModel: "Hero Splendor Plus",
-      vehicleRegNumber: `AP 26 CA ${randomNum}`,
-      drivingLicense: `DL-04202400${randomNum}`,
+      vehicleRegNumber: `TS 09 CA ${randomNum}`,
+      drivingLicense: `DL-TS09202400${randomNum}`,
       weeklyTarget: 50,
       weeklyOrders: 0,
       emergencyContact: "+91 9848011222 (Brother)",
       bankName: "HDFC Bank"
     });
-    showToast("Filled demo candidate details", "info");
+    showToast("Filled candidate details", "info");
   };
 
   const handleAddCandidateSubmit = (e) => {
@@ -194,11 +194,11 @@ export default function ManagerExecutivesPage() {
       name: "",
       mobile: "",
       email: "",
-      city: "Nellore",
-      zone: "Nellore Central Hub (Zone 3)",
+      city: "Hyderabad",
+      zone: "Hyderabad Central Hub (Zone 1 - Hitec City / Madhapur)",
       accountStatus: "Active",
       kycStatus: "Verified",
-      rating: 4.9,
+      rating: 5.0,
       vehicleType: "Two Wheeler (Bike)",
       vehicleModel: "Honda Activa 6G",
       vehicleRegNumber: "",
@@ -488,10 +488,10 @@ export default function ManagerExecutivesPage() {
                       onChange={(e) => setAddFormData({ ...addFormData, zone: e.target.value })}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
                     >
-                      <option value="Nellore Central Hub (Zone 3)">Nellore Central Hub (Zone 3)</option>
-                      <option value="Nellore North Hub (Zone 1)">Nellore North Hub (Zone 1)</option>
-                      <option value="Nellore South Hub (Zone 2)">Nellore South Hub (Zone 2)</option>
-                      <option value="Kavali Sub-Hub (Zone 4)">Kavali Sub-Hub (Zone 4)</option>
+                      <option value="Hyderabad Central Hub (Zone 1 - Hitec City / Madhapur)">Hyderabad Central Hub (Zone 1 - Hitec City / Madhapur)</option>
+                      <option value="Hyderabad North Hub (Zone 2 - Kukatpally / Miyapur)">Hyderabad North Hub (Zone 2 - Kukatpally / Miyapur)</option>
+                      <option value="Hyderabad South Hub (Zone 3 - Gachibowli / Kondapur)">Hyderabad South Hub (Zone 3 - Gachibowli / Kondapur)</option>
+                      <option value="Hyderabad East Hub (Zone 4 - Secunderabad / Begumpet)">Hyderabad East Hub (Zone 4 - Secunderabad / Begumpet)</option>
                     </select>
                   </div>
                 </div>

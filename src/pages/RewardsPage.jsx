@@ -27,7 +27,7 @@ export default function RewardsPage() {
     claimReward(reward.id, {
       executiveName: user.name,
       executiveId: user.id,
-      hub: user.zone || "Nellore Central Hub"
+      hub: user.zone || "Hyderabad Central Hub"
     });
 
     setSelectedReward(null);
@@ -226,7 +226,7 @@ export default function RewardsPage() {
                 {selectedReward.title || selectedReward.name}
               </h4>
               <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                {selectedReward.description || "Your reward will be credited or made ready for pickup at your Nellore Hub."}
+                {selectedReward.description || "Your reward will be credited or made ready for pickup at your Hyderabad Hub."}
               </p>
             </div>
 
@@ -238,7 +238,7 @@ export default function RewardsPage() {
               <div className="flex justify-between">
                 <span className="text-slate-500">Destination:</span>
                 <span className="font-bold text-navy-900">
-                  {selectedReward.amount ? (user.payoutAccount?.bankName || "HDFC Bank") : `${user.city || 'Nellore'} Central Hub Desk`}
+                  {selectedReward.amount ? (user.payoutAccount?.bankName || "HDFC Bank") : `${user.city || 'Hyderabad'} Central Hub Desk`}
                 </span>
               </div>
             </div>

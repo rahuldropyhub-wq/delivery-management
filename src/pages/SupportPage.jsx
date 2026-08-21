@@ -70,7 +70,7 @@ export default function SupportPage() {
               Partner Support & Complaints
             </h2>
             <p className="text-xs text-slate-500">
-              Nellore Hub Helpdesk • Average response time: under 2 hours
+              Hyderabad Hub Helpdesk • Average response time: under 2 hours
             </p>
           </div>
         </div>

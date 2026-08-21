@@ -52,7 +52,7 @@ export default function ManagerDashboardPage() {
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold mt-2 tracking-tight">
-            Nellore Operations Dashboard
+            Hyderabad Operations Dashboard
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
             Maintain operational records, orders history, milestones, earnings, rewards, and support tickets for all delivery executives.
