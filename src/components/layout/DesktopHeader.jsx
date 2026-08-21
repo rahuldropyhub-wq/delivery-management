@@ -15,7 +15,7 @@ export default function DesktopHeader() {
   const pageTitles = {
     '/app/dashboard': 'Performance Dashboard',
     '/app/profile': 'Executive Profile',
-    '/app/orders': 'Orders History',
+    '/app/orders': 'Orders & Volume Counts',
     '/app/earnings': 'Earnings & Payouts',
     '/app/milestones': 'Weekly Milestones',
     '/app/weekly-contest': 'Weekly Contest',

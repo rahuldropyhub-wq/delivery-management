@@ -116,6 +116,89 @@ export function DataProvider({ children }) {
     });
   };
 
+  const addExecutive = (execData) => {
+    const newId = execData.id || `EXE${Math.floor(10000 + Math.random() * 90000)}`;
+    const weeklyTarget = Number(execData.weeklyTarget) || 50;
+    const weeklyOrders = Number(execData.weeklyOrders) || 0;
+    const deliveryEarnings = Number(execData.deliveryEarnings) || (weeklyOrders * 100);
+    const bonusEarnings = Number(execData.bonusEarnings) || 0;
+    const weeklyEarnings = deliveryEarnings + bonusEarnings;
+    const progressPercentage = Math.min(100, Math.round((weeklyOrders / weeklyTarget) * 100));
+
+    const avatarPool = [
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&auto=format&fit=crop&q=80",
+      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop&q=80"
+    ];
+    const randomAvatar = avatarPool[Math.floor(Math.random() * avatarPool.length)];
+
+    const newExecutive = {
+      id: newId,
+      name: execData.name || "New Candidate",
+      avatar: execData.avatar || randomAvatar,
+      mobile: execData.mobile?.startsWith('+91') ? execData.mobile : `+91 ${execData.mobile?.replace(/^\+91\s*/, '') || '9876543210'}`,
+      email: execData.email || `${execData.name?.toLowerCase().replace(/\s+/g, '.') || 'candidate'}@dropyhub.com`,
+      city: execData.city || "Nellore",
+      zone: execData.zone || "Nellore Central Hub (Zone 3)",
+      dob: execData.dob || "15 Jun 1998",
+      bloodGroup: execData.bloodGroup || "O+",
+      emergencyContact: execData.emergencyContact || "+91 9876543210 (Family)",
+      joiningDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      kycStatus: execData.kycStatus || "Verified",
+      accountStatus: execData.accountStatus || "Active",
+      rating: Number(execData.rating) || 4.9,
+      totalDeliveriesLifetime: weeklyOrders,
+      vehicleInfo: {
+        type: execData.vehicleType || "Two Wheeler (Bike)",
+        model: execData.vehicleModel || "Honda Activa 6G",
+        regNumber: execData.vehicleRegNumber || "AP 26 AB 1234",
+        fuelType: execData.fuelType || "Petrol",
+        insuranceExpiry: "31 Dec 2026"
+      },
+      drivingLicense: execData.drivingLicense || `DL-04202400${Math.floor(1000 + Math.random() * 9000)}`,
+      payoutAccount: {
+        bankName: execData.bankName || "State Bank of India",
+        accountNumberMasked: "•••• •••• •••• 4412",
+        ifsc: "SBIN0004561",
+        upiId: `${execData.name?.toLowerCase().replace(/\s+/g, '') || 'candidate'}@oksbi`
+      },
+      stats: {
+        weeklyOrders: weeklyOrders,
+        weeklyTarget: weeklyTarget,
+        weeklyEarnings: weeklyEarnings,
+        deliveryEarnings: deliveryEarnings,
+        bonusEarnings: bonusEarnings,
+        referralEarnings: 0,
+        totalEarnings: weeklyEarnings,
+        rank: (data.executives?.length || 5) + 1,
+        progressPercentage: progressPercentage,
+        remainingOrders: Math.max(0, weeklyTarget - weeklyOrders),
+        nextReward: "₹500 Bonus",
+        completedOrders: weeklyOrders,
+        cancelledOrders: 0,
+        underReviewOrders: 0
+      }
+    };
+
+    setData((prev) => ({
+      ...prev,
+      executives: [newExecutive, ...prev.executives],
+      lastUpdated: new Date().toISOString()
+    }));
+
+    return newExecutive;
+  };
+
+  const deleteExecutive = (id) => {
+    setData((prev) => ({
+      ...prev,
+      executives: prev.executives.filter((e) => e.id !== id),
+      lastUpdated: new Date().toISOString()
+    }));
+  };
+
   // -------------------------------------------------------------
   // Order Mutations
   // -------------------------------------------------------------
@@ -594,6 +677,8 @@ export function DataProvider({ children }) {
         data,
         getExecutive,
         updateExecutive,
+        addExecutive,
+        deleteExecutive,
         getOrdersForExecutive,
         addOrder,
         updateOrder,

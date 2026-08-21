@@ -28,7 +28,7 @@ export default function DesktopSidebar() {
   const links = [
     { label: "Dashboard", path: "/app/dashboard", icon: LayoutDashboard },
     { label: "My Profile", path: "/app/profile", icon: User },
-    { label: "My Orders", path: "/app/orders", icon: Package },
+    { label: "Orders Count", path: "/app/orders", icon: Package, badge: `${user.stats.weeklyOrders}` },
     { label: "Earnings", path: "/app/earnings", icon: Wallet },
     { label: "Milestones", path: "/app/milestones", icon: Target, badge: `${user.stats.progressPercentage}%` },
     { label: "Weekly Contest", path: "/app/weekly-contest", icon: Trophy },

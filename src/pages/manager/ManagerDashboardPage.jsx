@@ -12,6 +12,7 @@ import {
   Bell,
   ArrowRight,
   PlusCircle,
+  UserPlus,
   TrendingUp,
   Clock,
   Sparkles,
@@ -176,7 +177,15 @@ export default function ManagerDashboardPage() {
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
           Quick Management Actions
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <Link
+            to="/manager/executives"
+            className="p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100/80 border border-amber-300/80 text-amber-950 transition-colors flex items-center gap-2.5 text-xs font-bold"
+          >
+            <UserPlus className="w-4 h-4 text-amber-700 shrink-0" />
+            <span>+ Onboard Executive</span>
+          </Link>
+
           <Link
             to="/manager/orders"
             className="p-3.5 rounded-2xl bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-200 text-slate-800 hover:text-brand-700 transition-colors flex items-center gap-2.5 text-xs font-bold"
@@ -206,7 +215,7 @@ export default function ManagerDashboardPage() {
             className="p-3.5 rounded-2xl bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-800 hover:text-rose-800 transition-colors flex items-center gap-2.5 text-xs font-bold"
           >
             <Headphones className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>Resolve Complaints ({openTickets.length})</span>
+            <span>Support ({openTickets.length})</span>
           </Link>
         </div>
       </div>

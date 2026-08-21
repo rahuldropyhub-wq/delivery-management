@@ -7,7 +7,6 @@ import StatusBadge from '../components/common/StatusBadge';
 import NextMilestoneCard from '../components/dashboard/NextMilestoneCard';
 import WeeklyOverviewCard from '../components/dashboard/WeeklyOverviewCard';
 import EarningsPreviewChart from '../components/dashboard/EarningsPreviewChart';
-import RecentOrdersList from '../components/dashboard/RecentOrdersList';
 import EarningsSummaryCard from '../components/dashboard/EarningsSummaryCard';
 import { SkeletonCard, SkeletonChart, SkeletonList } from '../components/common/Skeleton';
 import EmptyState from '../components/common/EmptyState';
@@ -154,9 +153,6 @@ export default function DashboardPage() {
 
       {/* Earnings Chart Section */}
       <EarningsPreviewChart />
-
-      {/* Recent Orders List */}
-      <RecentOrdersList limit={4} />
     </div>
   );
 }

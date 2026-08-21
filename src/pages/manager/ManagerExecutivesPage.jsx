@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
-import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import StatusBadge from '../../components/common/StatusBadge';
 import FilterTabs from '../../components/common/FilterTabs';
@@ -11,6 +10,8 @@ import {
   Edit,
   Save,
   X,
+  UserPlus,
+  Trash2,
   Package,
   Wallet,
   Target,
@@ -18,19 +19,44 @@ import {
   ShieldCheck,
   Bike,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Phone,
+  Mail,
+  MapPin,
+  FileText
 } from 'lucide-react';
 
 export default function ManagerExecutivesPage() {
-  const { data, updateExecutive, getOrdersForExecutive } = useData();
+  const { data, updateExecutive, addExecutive, deleteExecutive } = useData();
   const { showToast } = useToast();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [editingExecutive, setEditingExecutive] = useState(null);
   const [editFormData, setEditFormData] = useState({});
+
+  // Add Candidate / Executive Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addFormData, setAddFormData] = useState({
+    name: "",
+    mobile: "",
+    email: "",
+    city: "Nellore",
+    zone: "Nellore Central Hub (Zone 3)",
+    accountStatus: "Active",
+    kycStatus: "Verified",
+    rating: 4.9,
+    vehicleType: "Two Wheeler (Bike)",
+    vehicleModel: "Honda Activa 6G",
+    vehicleRegNumber: "",
+    drivingLicense: "",
+    weeklyTarget: 50,
+    weeklyOrders: 0,
+    emergencyContact: "",
+    bankName: "State Bank of India"
+  });
 
   const executives = data.executives || [];
 
@@ -51,9 +77,9 @@ export default function ManagerExecutivesPage() {
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchName = exec.name.toLowerCase().includes(q);
-      const matchId = exec.id.toLowerCase().includes(q);
-      const matchMobile = exec.mobile.includes(q);
+      const matchName = exec.name?.toLowerCase().includes(q);
+      const matchId = exec.id?.toLowerCase().includes(q);
+      const matchMobile = exec.mobile?.includes(q);
       const matchVehicle = exec.vehicleInfo?.regNumber?.toLowerCase().includes(q);
       return matchName || matchId || matchMobile || matchVehicle;
     }
@@ -116,30 +142,115 @@ export default function ManagerExecutivesPage() {
     setSearchParams({});
   };
 
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Are you sure you want to remove ${name} (${id}) from the fleet?`)) {
+      deleteExecutive(id);
+      showToast(`Removed candidate ${name} from executive fleet`, "info");
+      if (editingExecutive?.id === id) {
+        setEditingExecutive(null);
+      }
+    }
+  };
+
+  const handleQuickFillCandidate = () => {
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    setAddFormData({
+      name: `Kiran Kumar (${randomNum})`,
+      mobile: `98480${randomNum}`,
+      email: `kiran.k${randomNum}@dropyhub.com`,
+      city: "Nellore",
+      zone: "Nellore Central Hub (Zone 3)",
+      accountStatus: "Active",
+      kycStatus: "Verified",
+      rating: 4.9,
+      vehicleType: "Two Wheeler (Bike)",
+      vehicleModel: "Hero Splendor Plus",
+      vehicleRegNumber: `AP 26 CA ${randomNum}`,
+      drivingLicense: `DL-04202400${randomNum}`,
+      weeklyTarget: 50,
+      weeklyOrders: 0,
+      emergencyContact: "+91 9848011222 (Brother)",
+      bankName: "HDFC Bank"
+    });
+    showToast("Filled demo candidate details", "info");
+  };
+
+  const handleAddCandidateSubmit = (e) => {
+    e.preventDefault();
+    if (!addFormData.name.trim()) {
+      showToast("Please enter Candidate Name", "error");
+      return;
+    }
+    if (!addFormData.mobile.trim()) {
+      showToast("Please enter Candidate Mobile Number", "error");
+      return;
+    }
+
+    const created = addExecutive(addFormData);
+    showToast(`Candidate ${created.name} onboarded with ID ${created.id}!`, "success");
+    setIsAddModalOpen(false);
+    // Reset form
+    setAddFormData({
+      name: "",
+      mobile: "",
+      email: "",
+      city: "Nellore",
+      zone: "Nellore Central Hub (Zone 3)",
+      accountStatus: "Active",
+      kycStatus: "Verified",
+      rating: 4.9,
+      vehicleType: "Two Wheeler (Bike)",
+      vehicleModel: "Honda Activa 6G",
+      vehicleRegNumber: "",
+      drivingLicense: "",
+      weeklyTarget: 50,
+      weeklyOrders: 0,
+      emergencyContact: "",
+      bankName: "State Bank of India"
+    });
+  };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-navy-900">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md">
+              Fleet Operations
+            </span>
+            <span className="text-xs text-slate-400">Total: {executives.length} Executives</span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-bold text-navy-900 mt-1">
             Delivery Executives Directory
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Select an executive to maintain their orders, earnings, rank, and milestone targets.
+            Onboard new delivery partners, maintain KYC, order targets, earnings, and status.
           </p>
         </div>
 
-        {/* Search */}
-        <div className="relative w-full sm:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search name, ID, phone, vehicle..."
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {/* Search */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search name, ID, phone, vehicle..."
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+
+          {/* Add Candidate Button */}
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0 tap-active"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>+ Add Candidate / Executive</span>
+          </button>
         </div>
       </div>
 
@@ -199,167 +310,408 @@ export default function ManagerExecutivesPage() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Rank</span>
+                  <span className="text-[10px] uppercase font-semibold text-slate-400 block">Rating</span>
                   <p className="font-extrabold text-purple-700 mt-0.5">
-                    #{exec.stats?.rank || "-"}
+                    ★ {exec.rating || "4.9"}
                   </p>
                 </div>
               </div>
 
               {/* Meta details */}
               <div className="mt-3 space-y-1 text-xs text-slate-500">
-                <p>📞 {exec.mobile}</p>
-                <p>📍 {exec.zone}</p>
-                <p>🛵 {exec.vehicleInfo?.model} ({exec.vehicleInfo?.regNumber})</p>
+                <p className="flex items-center gap-1.5 truncate">
+                  <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>{exec.mobile}</span>
+                </p>
+                <p className="flex items-center gap-1.5 truncate">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{exec.zone}</span>
+                </p>
+                <p className="flex items-center gap-1.5 truncate">
+                  <Bike className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>{exec.vehicleInfo?.model} ({exec.vehicleInfo?.regNumber})</span>
+                </p>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="mt-4 pt-3 border-t border-slate-100">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
               <button
                 onClick={() => handleOpenEdit(exec)}
-                className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <Edit className="w-3.5 h-3.5" />
                 <span>Edit Executive Data</span>
+              </button>
+
+              <button
+                onClick={() => handleDelete(exec.id, exec.name)}
+                className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
+                title="Remove candidate"
+              >
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Edit Executive Drawer / Modal */}
+      {/* ========================================================================= */}
+      {/* 🚀 ONBOARD NEW CANDIDATE / EXECUTIVE MODAL */}
+      {/* ========================================================================= */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex justify-center items-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 bg-slate-900 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-slate-950 font-black shadow-md">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white leading-tight">
+                    Onboard Delivery Candidate
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Register a new delivery executive partner to the hub.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleQuickFillCandidate}
+                  className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-semibold rounded-xl border border-slate-700 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Auto Fill Demo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body / Form */}
+            <form onSubmit={handleAddCandidateSubmit} className="p-5 sm:p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+              {/* Quick Fill on Mobile */}
+              <div className="sm:hidden">
+                <button
+                  type="button"
+                  onClick={handleQuickFillCandidate}
+                  className="w-full py-2 bg-amber-50 border border-amber-200 text-amber-800 font-bold rounded-xl flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Auto-Fill Test Candidate Info</span>
+                </button>
+              </div>
+
+              {/* Personal Information */}
+              <div>
+                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2.5 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-amber-600" />
+                  <span>Candidate Details</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Full Candidate Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Kiran Varma"
+                      value={addFormData.name}
+                      onChange={(e) => setAddFormData({ ...addFormData, name: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Mobile Number *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 9848012345"
+                      value={addFormData.mobile}
+                      onChange={(e) => setAddFormData({ ...addFormData, mobile: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g. kiran@dropyhub.com"
+                      value={addFormData.email}
+                      onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Assigned Hub / Zone
+                    </label>
+                    <select
+                      value={addFormData.zone}
+                      onChange={(e) => setAddFormData({ ...addFormData, zone: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="Nellore Central Hub (Zone 3)">Nellore Central Hub (Zone 3)</option>
+                      <option value="Nellore North Hub (Zone 1)">Nellore North Hub (Zone 1)</option>
+                      <option value="Nellore South Hub (Zone 2)">Nellore South Hub (Zone 2)</option>
+                      <option value="Kavali Sub-Hub (Zone 4)">Kavali Sub-Hub (Zone 4)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Compliance */}
+              <div>
+                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2.5 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Account Status & Verification</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Account Status
+                    </label>
+                    <select
+                      value={addFormData.accountStatus}
+                      onChange={(e) => setAddFormData({ ...addFormData, accountStatus: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="Active">Active (On Duty)</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Suspended">Suspended</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      KYC Status
+                    </label>
+                    <select
+                      value={addFormData.kycStatus}
+                      onChange={(e) => setAddFormData({ ...addFormData, kycStatus: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    >
+                      <option value="Verified">Verified (Complete)</option>
+                      <option value="Pending">Pending Documents</option>
+                      <option value="Not Verified">Not Verified</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Driving License Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. DL-042024009988"
+                      value={addFormData.drivingLicense}
+                      onChange={(e) => setAddFormData({ ...addFormData, drivingLicense: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Vehicle & Target Info */}
+              <div>
+                <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2.5 pb-1 border-b border-slate-100 flex items-center gap-1.5">
+                  <Bike className="w-4 h-4 text-brand-600" />
+                  <span>Vehicle Info & Weekly Target</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Vehicle Model
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Honda Activa 6G"
+                      value={addFormData.vehicleModel}
+                      onChange={(e) => setAddFormData({ ...addFormData, vehicleModel: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Vehicle Plate Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. AP 26 CA 4589"
+                      value={addFormData.vehicleRegNumber}
+                      onChange={(e) => setAddFormData({ ...addFormData, vehicleRegNumber: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Weekly Orders Target
+                    </label>
+                    <input
+                      type="number"
+                      min="10"
+                      max="200"
+                      value={addFormData.weeklyTarget}
+                      onChange={(e) => setAddFormData({ ...addFormData, weeklyTarget: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition-colors"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Onboard & Create Candidate</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* ✏️ EDIT EXECUTIVE DRAWER / MODAL */}
+      {/* ========================================================================= */}
       {editingExecutive && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex justify-end">
           <div className="bg-white w-full max-w-lg h-full overflow-y-auto p-6 shadow-2xl flex flex-col justify-between">
             <div>
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
-                    Data Administration
-                  </span>
-                  <h3 className="text-lg font-bold text-navy-900 mt-1">
-                    Maintain Data for {editingExecutive.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 font-mono">ID: {editingExecutive.id}</p>
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={editingExecutive.avatar}
+                    alt={editingExecutive.name}
+                    className="w-10 h-10 rounded-xl object-cover"
+                  />
+                  <div>
+                    <h3 className="font-bold text-navy-900 text-base leading-tight">
+                      Edit Executive Data
+                    </h3>
+                    <p className="text-xs text-slate-500 font-mono">
+                      {editingExecutive.id} • {editingExecutive.name}
+                    </p>
+                  </div>
                 </div>
 
                 <button
                   onClick={() => setEditingExecutive(null)}
-                  className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-800"
+                  className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Edit Form */}
-              <form onSubmit={handleSave} className="space-y-4 text-xs">
-                {/* Performance Stats Group */}
-                <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200/60 space-y-3">
-                  <h4 className="font-bold text-amber-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                    <Target className="w-4 h-4 text-amber-600" />
-                    <span>Weekly Performance & Milestone Metrics</span>
-                  </h4>
+              <form onSubmit={handleSave} className="space-y-4 mt-5 text-xs">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl">
+                  <span className="font-bold text-amber-900 block mb-0.5">
+                    ⚙️ Performance & Target Controls
+                  </span>
+                  <p className="text-slate-600 text-[11px]">
+                    Updates made here immediately reflect on this executive's dashboard, earnings, and milestones.
+                  </p>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        Completed Orders
-                      </label>
-                      <input
-                        type="number"
-                        value={editFormData.weeklyOrders}
-                        onChange={(e) => setEditFormData({ ...editFormData, weeklyOrders: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-navy-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        Weekly Milestone Target
-                      </label>
-                      <input
-                        type="number"
-                        value={editFormData.weeklyTarget}
-                        onChange={(e) => setEditFormData({ ...editFormData, weeklyTarget: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-navy-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
+                {/* Orders & Target Fields */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Completed Orders (Weekly)
+                    </label>
+                    <input
+                      type="number"
+                      value={editFormData.weeklyOrders}
+                      onChange={(e) => setEditFormData({ ...editFormData, weeklyOrders: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-navy-900 focus:bg-white focus:outline-none"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        Delivery Pay (₹)
-                      </label>
-                      <input
-                        type="number"
-                        value={editFormData.deliveryEarnings}
-                        onChange={(e) => setEditFormData({ ...editFormData, deliveryEarnings: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-navy-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        Bonus (₹)
-                      </label>
-                      <input
-                        type="number"
-                        value={editFormData.bonusEarnings}
-                        onChange={(e) => setEditFormData({ ...editFormData, bonusEarnings: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-navy-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        Referral (₹)
-                      </label>
-                      <input
-                        type="number"
-                        value={editFormData.referralEarnings}
-                        onChange={(e) => setEditFormData({ ...editFormData, referralEarnings: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-navy-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        Zone Leaderboard Rank
-                      </label>
-                      <input
-                        type="number"
-                        value={editFormData.rank}
-                        onChange={(e) => setEditFormData({ ...editFormData, rank: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-navy-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        Partner Rating (1.0 - 5.0)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={editFormData.rating}
-                        onChange={(e) => setEditFormData({ ...editFormData, rating: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-navy-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Weekly Order Target
+                    </label>
+                    <input
+                      type="number"
+                      value={editFormData.weeklyTarget}
+                      onChange={(e) => setEditFormData({ ...editFormData, weeklyTarget: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-navy-900 focus:bg-white focus:outline-none"
+                    />
                   </div>
                 </div>
 
-                {/* Profile & Status Details */}
-                <div className="space-y-3 pt-2">
-                  <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px]">
-                    Personal & Administrative Status
-                  </h4>
+                {/* Earnings Fields */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Delivery Pay (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={editFormData.deliveryEarnings}
+                      onChange={(e) => setEditFormData({ ...editFormData, deliveryEarnings: e.target.value })}
+                      className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-emerald-700 focus:bg-white focus:outline-none"
+                    />
+                  </div>
 
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Bonus Pay (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={editFormData.bonusEarnings}
+                      onChange={(e) => setEditFormData({ ...editFormData, bonusEarnings: e.target.value })}
+                      className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-amber-700 focus:bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      Referral Pay (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={editFormData.referralEarnings}
+                      onChange={(e) => setEditFormData({ ...editFormData, referralEarnings: e.target.value })}
+                      className="w-full px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl font-bold text-blue-700 focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Profile and Meta */}
+                <div className="pt-2 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block font-bold text-slate-700 mb-1">
@@ -378,7 +730,7 @@ export default function ManagerExecutivesPage() {
 
                     <div>
                       <label className="block font-bold text-slate-700 mb-1">
-                        KYC Informational Status
+                        KYC Status
                       </label>
                       <select
                         value={editFormData.kycStatus}

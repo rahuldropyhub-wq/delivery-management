@@ -14,6 +14,7 @@ import ManagerLayout from './components/layout/ManagerLayout';
 import LoginPage from './pages/auth/LoginPage';
 import OtpVerificationPage from './pages/auth/OtpVerificationPage';
 import ManagerLoginPage from './pages/manager/ManagerLoginPage';
+import ManagerOtpVerificationPage from './pages/manager/ManagerOtpVerificationPage';
 
 // Executive Portal Feature Pages (Phase 1)
 import DashboardPage from './pages/DashboardPage';
@@ -44,6 +45,11 @@ import ManagerReferralsPage from './pages/manager/ManagerReferralsPage';
 import ManagerNotificationsPage from './pages/manager/ManagerNotificationsPage';
 import ManagerSupportPage from './pages/manager/ManagerSupportPage';
 
+function RootRedirect() {
+  const { isAuthenticated } = useAuth();
+  return <Navigate to={isAuthenticated ? "/app/dashboard" : "/login"} replace />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -52,14 +58,15 @@ export default function App() {
           <ToastProvider>
             <Routes>
               {/* Root redirect */}
-              <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+              <Route path="/" element={<RootRedirect />} />
 
               {/* Public Executive Auth Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/verify-otp" element={<OtpVerificationPage />} />
 
-              {/* Public Manager Auth Route */}
+              {/* Public Manager Auth Routes */}
               <Route path="/manager/login" element={<ManagerLoginPage />} />
+              <Route path="/manager/verify-otp" element={<ManagerOtpVerificationPage />} />
 
               {/* Protected Executive Portal Layout */}
               <Route path="/app" element={<AppLayout />}>
