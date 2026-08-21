@@ -1,13 +1,14 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Bell, Menu, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { initialNotifications } from '../../data/notifications';
+import { useData } from '../../context/DataContext';
 
 export default function MobileHeader({ onOpenMenu }) {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const unreadCount = initialNotifications.filter((n) => !n.isRead).length;
+  const { activeExecutiveId } = useAuth();
+  const { getExecutive, data } = useData();
+  const user = getExecutive(activeExecutiveId);
+  const unreadCount = data.notifications.filter((n) => !n.isRead).length;
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between lg:hidden pt-safe">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { rewardsData } from '../data/rewards';
+import { useData } from '../context/DataContext';
 import StatusBadge from '../components/common/StatusBadge';
 import Modal from '../components/common/Modal';
 import { useToast } from '../context/ToastContext';
@@ -8,10 +8,13 @@ import confetti from 'canvas-confetti';
 import { Gift, IndianRupee, Shirt, CheckCircle2, Lock, Sparkles, PackageCheck } from 'lucide-react';
 
 export default function RewardsPage() {
-  const { user } = useAuth();
+  const { activeExecutiveId } = useAuth();
+  const { data, getExecutive, claimReward } = useData();
+  const user = getExecutive(activeExecutiveId);
   const { showToast } = useToast();
   const [selectedReward, setSelectedReward] = useState(null);
-  const [claimedIds, setClaimedIds] = useState([]);
+
+  const rewards = data.rewards;
 
   const handleClaim = (reward) => {
     // Trigger celebratory confetti
@@ -21,7 +24,12 @@ export default function RewardsPage() {
       origin: { y: 0.6 }
     });
 
-    setClaimedIds((prev) => [...prev, reward.id]);
+    claimReward(reward.id, {
+      executiveName: user.name,
+      executiveId: user.id,
+      hub: user.zone || "Nellore Central Hub"
+    });
+
     setSelectedReward(null);
     showToast(`Successfully claimed: ${reward.title || reward.name}!`, 'success');
   };
@@ -45,7 +53,9 @@ export default function RewardsPage() {
         <div className="flex items-center gap-2">
           <div className="bg-white/10 rounded-2xl p-3 border border-white/15 text-center">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Rewards</span>
-            <span className="text-lg font-extrabold text-amber-300">8 Items</span>
+            <span className="text-lg font-extrabold text-amber-300">
+              {(rewards.cashRewards?.length || 0) + (rewards.physicalRewards?.length || 0)} Items
+            </span>
           </div>
         </div>
       </div>
@@ -65,9 +75,8 @@ export default function RewardsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          {rewardsData.cashRewards.map((reward) => {
-            const isClaimedNow = claimedIds.includes(reward.id);
-            const currentStatus = isClaimedNow ? 'Claimed' : reward.status;
+          {(rewards.cashRewards || []).map((reward) => {
+            const currentStatus = reward.status;
 
             return (
               <div
@@ -108,7 +117,7 @@ export default function RewardsPage() {
                   ) : currentStatus === 'Claimed' ? (
                     <span className="text-[11px] font-semibold text-indigo-700 flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>Credited to HDFC Bank</span>
+                      <span>Credited to Bank Account</span>
                     </span>
                   ) : (
                     <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
@@ -138,9 +147,8 @@ export default function RewardsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {rewardsData.physicalRewards.map((item) => {
-            const isClaimedNow = claimedIds.includes(item.id);
-            const currentStatus = isClaimedNow ? 'Claimed' : item.status;
+          {(rewards.physicalRewards || []).map((item) => {
+            const currentStatus = item.status;
 
             return (
               <div
@@ -185,7 +193,7 @@ export default function RewardsPage() {
                     </p>
                   ) : currentStatus === 'Claimed' ? (
                     <p className="text-[11px] text-slate-600 font-medium">
-                      {item.deliveryStatus}
+                      {item.deliveryStatus || "Processing for Dispatch"}
                     </p>
                   ) : (
                     <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
@@ -230,7 +238,7 @@ export default function RewardsPage() {
               <div className="flex justify-between">
                 <span className="text-slate-500">Destination:</span>
                 <span className="font-bold text-navy-900">
-                  {selectedReward.amount ? "HDFC Bank (•••• 7821)" : "Nellore Central Hub Desk"}
+                  {selectedReward.amount ? (user.payoutAccount?.bankName || "HDFC Bank") : `${user.city || 'Nellore'} Central Hub Desk`}
                 </span>
               </div>
             </div>

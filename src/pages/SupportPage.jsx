@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { supportCategories, initialTickets } from '../data/tickets';
+import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import StatusBadge from '../components/common/StatusBadge';
 import FilterTabs from '../components/common/FilterTabs';
 import { useToast } from '../context/ToastContext';
@@ -10,7 +11,11 @@ import { Headphones, Send, PlusCircle, Clock, ChevronRight, MessageSquare, Alert
 export default function SupportPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [tickets, setTickets] = useState(initialTickets);
+  const { activeExecutiveId } = useAuth();
+  const { data, getExecutive, createTicket, supportCategories } = useData();
+  const user = getExecutive(activeExecutiveId);
+  const tickets = data.tickets || [];
+
   const [filter, setFilter] = useState("all");
   const [showCreateForm, setShowCreateForm] = useState(false);
 
@@ -35,39 +40,21 @@ export default function SupportPage() {
     return true;
   });
 
-  const onSubmit = async (data) => {
-    await new Promise((r) => setTimeout(r, 600));
+  const onSubmit = async (formData) => {
+    await new Promise((r) => setTimeout(r, 400));
 
-    const newTicketId = `TKT${1000 + tickets.length + 1}`;
-    const newTicket = {
-      id: newTicketId,
-      category: data.category,
-      subject: data.subject,
-      description: data.description,
-      status: "Open",
-      priority: data.priority || "Medium",
-      createdAt: "Just now",
-      updatedAt: "Just now",
-      messages: [
-        {
-          sender: "user",
-          senderName: "Rahul Sharma",
-          message: data.description,
-          time: "Just now"
-        },
-        {
-          sender: "system",
-          senderName: "Support Bot",
-          message: "Ticket created successfully. An agent from Nellore Hub will review your complaint shortly.",
-          time: "Just now"
-        }
-      ]
-    };
+    const newTicket = createTicket({
+      category: formData.category,
+      subject: formData.subject,
+      description: formData.description,
+      priority: formData.priority || "Medium",
+      executiveId: user.id,
+      executiveName: user.name
+    });
 
-    setTickets([newTicket, ...tickets]);
     reset();
     setShowCreateForm(false);
-    showToast(`Support Ticket ${newTicketId} created successfully!`, 'success');
+    showToast(`Support Ticket ${newTicket.id} created successfully!`, 'success');
   };
 
   return (
@@ -120,7 +107,7 @@ export default function SupportPage() {
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-navy-900 focus:bg-white focus:outline-none focus:border-brand-600"
                 >
                   <option value="">-- Select Issue Category --</option>
-                  {supportCategories.map((cat) => (
+                  {(supportCategories || []).map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>

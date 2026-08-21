@@ -1,13 +1,17 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { currentMilestone, milestoneHistory } from '../data/milestones';
+import { useData } from '../context/DataContext';
 import StatusBadge from '../components/common/StatusBadge';
 import ProgressCard from '../components/common/ProgressCard';
 import { Target, Gift, CheckCircle2, Lock, Sparkles, Clock, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function MilestonesPage() {
-  const { user } = useAuth();
+  const { activeExecutiveId } = useAuth();
+  const { data, getExecutive } = useData();
+  const user = getExecutive(activeExecutiveId);
+  const currentMilestone = data.milestone;
+  const milestoneHistory = data.milestone.history || [];
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
@@ -36,12 +40,12 @@ export default function MilestonesPage() {
             </p>
           </div>
           <span className="text-xs font-bold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-xl">
-            4 Tiers
+            {currentMilestone.tiers?.length || 4} Tiers
           </span>
         </div>
 
         <div className="space-y-3 relative">
-          {currentMilestone.tiers.map((tier, idx) => (
+          {(currentMilestone.tiers || []).map((tier, idx) => (
             <div
               key={tier.id}
               className={`p-4 rounded-2xl border transition-all ${
@@ -77,7 +81,7 @@ export default function MilestonesPage() {
                     <p className="text-[11px] text-slate-500 mt-0.5">
                       Target: <strong>{tier.target} Orders</strong>
                       {tier.achieved && <span className="text-emerald-700 font-semibold ml-1.5">• Unlocked {tier.achievedAt}</span>}
-                      {tier.isCurrent && <span className="text-brand-700 font-semibold ml-1.5">• 42/50 Completed</span>}
+                      {tier.isCurrent && <span className="text-brand-700 font-semibold ml-1.5">• {currentMilestone.completedOrders}/{tier.target} Completed</span>}
                     </p>
                   </div>
                 </div>

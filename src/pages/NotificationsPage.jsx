@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { initialNotifications } from '../data/notifications';
+import { useData } from '../context/DataContext';
 import FilterTabs from '../components/common/FilterTabs';
 import { useToast } from '../context/ToastContext';
 import { CheckCheck, Bell, ChevronRight, Check } from 'lucide-react';
@@ -8,9 +8,10 @@ import EmptyState from '../components/common/EmptyState';
 
 export default function NotificationsPage() {
   const { showToast } = useToast();
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { data, markNotificationRead, markAllNotificationsRead } = useData();
   const [filter, setFilter] = useState("all");
 
+  const notifications = data.notifications || [];
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const filteredNotifications = notifications.filter((n) => {
@@ -19,14 +20,12 @@ export default function NotificationsPage() {
   });
 
   const handleMarkAsRead = (id) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    markNotificationRead(id);
     showToast("Notification marked as read", "info");
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    markAllNotificationsRead();
     showToast("All notifications marked as read", "success");
   };
 
@@ -86,7 +85,7 @@ export default function NotificationsPage() {
             >
               <div className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-xl shrink-0">
-                  {item.emoji}
+                  {item.emoji || '📢'}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -106,7 +105,7 @@ export default function NotificationsPage() {
                     </div>
 
                     <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md uppercase shrink-0">
-                      {item.tag}
+                      {item.tag || 'General'}
                     </span>
                   </div>
 

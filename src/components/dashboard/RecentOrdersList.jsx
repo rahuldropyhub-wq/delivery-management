@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowRight, Package } from 'lucide-react';
-import { mockOrders } from '../../data/orders';
+import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 import StatusBadge from '../common/StatusBadge';
 import OrderDetailsSheet from '../orders/OrderDetailsSheet';
 
 export default function RecentOrdersList({ limit = 4, className = "" }) {
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const recentOrders = mockOrders.slice(0, limit);
+  const { getOrdersForExecutive } = useData();
+  const { activeExecutiveId } = useAuth();
+  
+  const userOrders = getOrdersForExecutive(activeExecutiveId);
+  const recentOrders = userOrders.slice(0, limit);
 
   return (
     <div className={`bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-card ${className}`}>
@@ -17,52 +22,58 @@ export default function RecentOrdersList({ limit = 4, className = "" }) {
           to="/app/orders"
           className="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-0.5 group"
         >
-          <span>View All ({mockOrders.length})</span>
+          <span>View All ({userOrders.length})</span>
           <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
 
       {/* Orders Cards List */}
-      <div className="divide-y divide-slate-100">
-        {recentOrders.map((order) => (
-          <div
-            key={order.id}
-            onClick={() => setSelectedOrder(order)}
-            className="py-3 first:pt-1 last:pb-1 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 -mx-2 px-2 rounded-xl transition-colors tap-active"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
-                <Package className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold text-navy-900">
-                    {order.id}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    {order.orderDate}
-                  </span>
+      {recentOrders.length === 0 ? (
+        <div className="py-6 text-center text-slate-400 text-xs">
+          No recent orders recorded yet.
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {recentOrders.map((order) => (
+            <div
+              key={order.id}
+              onClick={() => setSelectedOrder(order)}
+              className="py-3 first:pt-1 last:pb-1 flex items-center justify-between cursor-pointer hover:bg-slate-50/70 -mx-2 px-2 rounded-xl transition-colors tap-active"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                  <Package className="w-4 h-4" />
                 </div>
-                <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                  {order.dropArea}
-                </p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold text-navy-900">
+                      {order.id}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {order.orderDate}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                    {order.dropArea}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3 shrink-0 ml-2">
-              <div className="text-right">
-                <p className="text-xs font-extrabold text-navy-900">
-                  ₹{order.earnings}
-                </p>
-                <div className="mt-0.5">
-                  <StatusBadge status={order.status} size="sm" />
+              <div className="flex items-center gap-3 shrink-0 ml-2">
+                <div className="text-right">
+                  <p className="text-xs font-extrabold text-navy-900">
+                    ₹{order.earnings}
+                  </p>
+                  <div className="mt-0.5">
+                    <StatusBadge status={order.status} size="sm" />
+                  </div>
                 </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-300" />
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-3 pt-3 border-t border-slate-100">
         <Link

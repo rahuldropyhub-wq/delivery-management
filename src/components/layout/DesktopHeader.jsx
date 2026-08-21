@@ -2,13 +2,15 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Bell, MapPin, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { initialNotifications } from '../../data/notifications';
+import { useData } from '../../context/DataContext';
 import StatusBadge from '../common/StatusBadge';
 
 export default function DesktopHeader() {
-  const { user } = useAuth();
+  const { activeExecutiveId } = useAuth();
+  const { getExecutive, data } = useData();
+  const user = getExecutive(activeExecutiveId);
   const location = useLocation();
-  const unreadCount = initialNotifications.filter((n) => !n.isRead).length;
+  const unreadCount = data.notifications.filter((n) => !n.isRead).length;
 
   const pageTitles = {
     '/app/dashboard': 'Performance Dashboard',
@@ -46,8 +48,8 @@ export default function DesktopHeader() {
       <div className="flex items-center gap-4">
         {/* Badges */}
         <div className="flex items-center gap-2">
-          <StatusBadge status="Active" size="md" />
-          <StatusBadge status="Verified" size="md" />
+          <StatusBadge status={user.accountStatus || "Active"} size="md" />
+          <StatusBadge status={user.kycStatus || "Verified"} size="md" />
         </div>
 
         <div className="h-6 w-px bg-slate-200" />

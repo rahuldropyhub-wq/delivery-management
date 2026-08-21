@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { mockOrders } from '../data/orders';
+import { useData } from '../context/DataContext';
 import FilterTabs from '../components/common/FilterTabs';
 import StatusBadge from '../components/common/StatusBadge';
 import OrderDetailsSheet from '../components/orders/OrderDetailsSheet';
@@ -10,22 +10,25 @@ import ErrorState from '../components/common/ErrorState';
 import { Search, Package, ChevronRight, Filter, Calendar, MapPin } from 'lucide-react';
 
 export default function OrdersPage() {
-  const { uiStateMode, setUiStateMode } = useAuth();
+  const { uiStateMode, setUiStateMode, activeExecutiveId } = useAuth();
+  const { getOrdersForExecutive } = useData();
+  const executiveOrders = getOrdersForExecutive(activeExecutiveId);
+
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
   const filterCounts = useMemo(() => {
     return {
-      all: mockOrders.length,
-      completed: mockOrders.filter((o) => o.status === 'Completed').length,
-      cancelled: mockOrders.filter((o) => o.status === 'Cancelled').length,
-      underReview: mockOrders.filter((o) => o.status === 'Under Review').length
+      all: executiveOrders.length,
+      completed: executiveOrders.filter((o) => o.status === 'Completed').length,
+      cancelled: executiveOrders.filter((o) => o.status === 'Cancelled').length,
+      underReview: executiveOrders.filter((o) => o.status === 'Under Review').length
     };
-  }, []);
+  }, [executiveOrders]);
 
   const filteredOrders = useMemo(() => {
-    return mockOrders.filter((order) => {
+    return executiveOrders.filter((order) => {
       // Status filter
       if (activeFilter === 'completed' && order.status !== 'Completed') return false;
       if (activeFilter === 'cancelled' && order.status !== 'Cancelled') return false;
@@ -36,13 +39,13 @@ export default function OrdersPage() {
         const q = searchQuery.toLowerCase();
         const matchesId = order.id.toLowerCase().includes(q);
         const matchesArea = order.dropArea.toLowerCase().includes(q);
-        const matchesCustomer = order.customerName.toLowerCase().includes(q);
+        const matchesCustomer = order.customerName?.toLowerCase().includes(q);
         return matchesId || matchesArea || matchesCustomer;
       }
 
       return true;
     });
-  }, [activeFilter, searchQuery]);
+  }, [executiveOrders, activeFilter, searchQuery]);
 
   if (uiStateMode === 'loading') {
     return (
@@ -73,7 +76,7 @@ export default function OrdersPage() {
           <div>
             <h2 className="text-lg font-bold text-navy-900">My Orders History</h2>
             <p className="text-xs text-slate-500">
-              Showing {filteredOrders.length} of {mockOrders.length} total deliveries
+              Showing {filteredOrders.length} of {executiveOrders.length} total deliveries
             </p>
           </div>
 

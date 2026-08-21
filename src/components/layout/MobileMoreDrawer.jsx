@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   Target,
@@ -12,25 +12,27 @@ import {
   LogOut,
   ChevronRight,
   ShieldCheck,
-  Zap
+  Building2
 } from 'lucide-react';
 import BottomSheet from '../common/BottomSheet';
 import { useAuth } from '../../context/AuthContext';
-import { initialNotifications } from '../../data/notifications';
+import { useData } from '../../context/DataContext';
 
 export default function MobileMoreDrawer({ isOpen, onClose }) {
-  const { user, logout } = useAuth();
+  const { activeExecutiveId, logout, switchRole } = useAuth();
+  const { getExecutive, data } = useData();
+  const user = getExecutive(activeExecutiveId);
   const navigate = useNavigate();
-  const unreadNotifs = initialNotifications.filter((n) => !n.isRead).length;
+  const unreadNotifs = data.notifications.filter((n) => !n.isRead).length;
 
   const menuSections = [
     {
       title: "Performance & Contests",
       items: [
-        { label: "My Profile", path: "/app/profile", icon: User, badge: "Verified", badgeColor: "bg-blue-50 text-brand-700" },
-        { label: "Milestones", path: "/app/milestones", icon: Target, badge: "84%", badgeColor: "bg-amber-50 text-amber-700" },
+        { label: "My Profile", path: "/app/profile", icon: User, badge: user.kycStatus || "Verified", badgeColor: "bg-blue-50 text-brand-700" },
+        { label: "Milestones", path: "/app/milestones", icon: Target, badge: `${user.stats.progressPercentage}%`, badgeColor: "bg-amber-50 text-amber-700" },
         { label: "Weekly Contest", path: "/app/weekly-contest", icon: Trophy, badge: "₹1,000 Prize", badgeColor: "bg-amber-100 text-amber-800" },
-        { label: "Leaderboard", path: "/app/leaderboard", icon: Award, badge: "#12 Rank", badgeColor: "bg-purple-50 text-purple-700" },
+        { label: "Leaderboard", path: "/app/leaderboard", icon: Award, badge: `#${user.stats.rank || 7} Rank`, badgeColor: "bg-purple-50 text-purple-700" },
       ]
     },
     {
@@ -55,6 +57,12 @@ export default function MobileMoreDrawer({ isOpen, onClose }) {
     navigate('/login');
   };
 
+  const handleSwitchToManager = () => {
+    onClose();
+    switchRole('manager', 'Manager 1');
+    navigate('/manager/dashboard');
+  };
+
   return (
     <BottomSheet
       isOpen={isOpen}
@@ -77,7 +85,7 @@ export default function MobileMoreDrawer({ isOpen, onClose }) {
               <span>•</span>
               <span className="text-emerald-700 font-semibold flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                Verified
+                {user.kycStatus || "Verified"}
               </span>
             </div>
           </div>
@@ -87,6 +95,17 @@ export default function MobileMoreDrawer({ isOpen, onClose }) {
           className="text-xs font-bold text-brand-600 hover:text-brand-700 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm"
         >
           View
+        </button>
+      </div>
+
+      {/* Switch to Manager Panel */}
+      <div className="mb-4">
+        <button
+          onClick={handleSwitchToManager}
+          className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-navy-900 to-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm"
+        >
+          <Building2 className="w-4 h-4 text-brand-400" />
+          <span>Switch to Manager Portal</span>
         </button>
       </div>
 

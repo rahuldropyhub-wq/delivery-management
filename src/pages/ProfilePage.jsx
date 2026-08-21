@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import {
   User,
   Phone,
@@ -17,7 +18,9 @@ import {
 import StatusBadge from '../components/common/StatusBadge';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { activeExecutiveId } = useAuth();
+  const { getExecutive } = useData();
+  const user = getExecutive(activeExecutiveId);
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-3xl mx-auto">
@@ -46,8 +49,8 @@ export default function ProfilePage() {
 
               {/* Status Badges */}
               <div className="flex items-center justify-center sm:justify-start gap-2 mt-1 sm:mt-0">
-                <StatusBadge status={user.kycStatus} size="md" />
-                <StatusBadge status={user.accountStatus} size="md" />
+                <StatusBadge status={user.kycStatus || "Verified"} size="md" />
+                <StatusBadge status={user.accountStatus || "Active"} size="md" />
               </div>
             </div>
 
@@ -56,7 +59,7 @@ export default function ProfilePage() {
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                 <span className="text-slate-400 font-medium block text-[10px] uppercase">Lifetime Orders</span>
                 <span className="font-extrabold text-navy-900 text-sm">
-                  {user.totalDeliveriesLifetime.toLocaleString('en-IN')}
+                  {user.totalDeliveriesLifetime?.toLocaleString('en-IN') || 0}
                 </span>
               </div>
 
@@ -70,7 +73,7 @@ export default function ProfilePage() {
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 col-span-2 sm:col-span-1">
                 <span className="text-slate-400 font-medium block text-[10px] uppercase">Operating Zone</span>
                 <span className="font-bold text-navy-900 text-xs truncate block">
-                  {user.city} (Zone 3)
+                  {user.city} ({user.zone?.split('(')[1]?.replace(')', '') || 'Zone 3'})
                 </span>
               </div>
             </div>
@@ -132,13 +135,13 @@ export default function ProfilePage() {
             <div>
               <span className="text-slate-400 font-medium block text-[11px]">Registered Vehicle</span>
               <p className="font-semibold text-navy-900 mt-0.5">
-                {user.vehicleInfo.model} ({user.vehicleInfo.type})
+                {user.vehicleInfo?.model} ({user.vehicleInfo?.type})
               </p>
             </div>
 
             <div>
               <span className="text-slate-400 font-medium block text-[11px]">Registration Number</span>
-              <p className="font-mono font-bold text-navy-900 mt-0.5">{user.vehicleInfo.regNumber}</p>
+              <p className="font-mono font-bold text-navy-900 mt-0.5">{user.vehicleInfo?.regNumber}</p>
             </div>
 
             <div>
@@ -149,7 +152,7 @@ export default function ProfilePage() {
             <div>
               <span className="text-slate-400 font-medium block text-[11px]">Insurance Validity</span>
               <p className="font-semibold text-emerald-700 mt-0.5">
-                Valid until {user.vehicleInfo.insuranceExpiry}
+                Valid until {user.vehicleInfo?.insuranceExpiry}
               </p>
             </div>
           </div>
@@ -165,17 +168,17 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="text-slate-400 font-medium block text-[11px]">Bank Name</span>
-              <p className="font-bold text-navy-900 mt-0.5">{user.payoutAccount.bankName}</p>
+              <p className="font-bold text-navy-900 mt-0.5">{user.payoutAccount?.bankName}</p>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="text-slate-400 font-medium block text-[11px]">Account Number</span>
-              <p className="font-mono font-bold text-navy-900 mt-0.5">{user.payoutAccount.accountNumberMasked}</p>
+              <p className="font-mono font-bold text-navy-900 mt-0.5">{user.payoutAccount?.accountNumberMasked}</p>
             </div>
 
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="text-slate-400 font-medium block text-[11px]">IFSC Code</span>
-              <p className="font-mono font-bold text-navy-900 mt-0.5">{user.payoutAccount.ifsc}</p>
+              <p className="font-mono font-bold text-navy-900 mt-0.5">{user.payoutAccount?.ifsc}</p>
             </div>
           </div>
 

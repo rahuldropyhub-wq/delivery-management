@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { leaderboardData } from '../data/leaderboard';
+import { useData } from '../context/DataContext';
 import { Trophy, Award, Medal, Flame, Sparkles, TrendingUp } from 'lucide-react';
 import FilterTabs from '../components/common/FilterTabs';
 
 export default function LeaderboardPage() {
-  const { user } = useAuth();
+  const { activeExecutiveId } = useAuth();
+  const { data, getExecutive } = useData();
+  const user = getExecutive(activeExecutiveId);
   const [period, setPeriod] = useState("thisWeek");
 
-  const podium = leaderboardData.topPerformers;
-  const rankings = leaderboardData.rankingsList;
+  const leaderboardData = data.leaderboard;
+  const podium = leaderboardData.topPerformers || [];
+  const rankings = leaderboardData.rankingsList || [];
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
@@ -34,76 +37,78 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Top 3 Podium Cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4 items-end pt-4 pb-2">
-        {/* 2nd Place (Silver) */}
-        <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-card flex flex-col items-center text-center order-1 relative">
-          <div className="absolute -top-3 w-6 h-6 rounded-full bg-slate-200 text-slate-700 font-extrabold text-xs flex items-center justify-center shadow-sm">
-            2
+      {podium.length >= 3 && (
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 items-end pt-4 pb-2">
+          {/* 2nd Place (Silver) */}
+          <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-card flex flex-col items-center text-center order-1 relative">
+            <div className="absolute -top-3 w-6 h-6 rounded-full bg-slate-200 text-slate-700 font-extrabold text-xs flex items-center justify-center shadow-sm">
+              2
+            </div>
+            <img
+              src={podium[1].avatar}
+              alt={podium[1].name}
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-slate-300 mt-2"
+            />
+            <h4 className="text-xs sm:text-sm font-bold text-navy-900 mt-2 truncate w-full">
+              {podium[1].name}
+            </h4>
+            <span className="text-[10px] sm:text-xs font-extrabold text-brand-600">
+              {podium[1].orders} Orders
+            </span>
+            <span className="text-[10px] text-slate-400">
+              {podium[1].earnings}
+            </span>
           </div>
-          <img
-            src={podium[1].avatar}
-            alt={podium[1].name}
-            className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-slate-300 mt-2"
-          />
-          <h4 className="text-xs sm:text-sm font-bold text-navy-900 mt-2 truncate w-full">
-            {podium[1].name}
-          </h4>
-          <span className="text-[10px] sm:text-xs font-extrabold text-brand-600">
-            {podium[1].orders} Orders
-          </span>
-          <span className="text-[10px] text-slate-400">
-            {podium[1].earnings}
-          </span>
-        </div>
 
-        {/* 1st Place (Gold) - Elevated */}
-        <div className="bg-gradient-to-b from-amber-50 to-white rounded-2xl p-3.5 sm:p-5 border-2 border-amber-300 shadow-lg flex flex-col items-center text-center order-2 relative -mt-3">
-          <div className="absolute -top-4 w-8 h-8 rounded-full bg-amber-400 text-amber-950 font-black text-sm flex items-center justify-center shadow-md">
-            👑 1
+          {/* 1st Place (Gold) - Elevated */}
+          <div className="bg-gradient-to-b from-amber-50 to-white rounded-2xl p-3.5 sm:p-5 border-2 border-amber-300 shadow-lg flex flex-col items-center text-center order-2 relative -mt-3">
+            <div className="absolute -top-4 w-8 h-8 rounded-full bg-amber-400 text-amber-950 font-black text-sm flex items-center justify-center shadow-md">
+              👑 1
+            </div>
+            <img
+              src={podium[0].avatar}
+              alt={podium[0].name}
+              className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-amber-400 mt-2 shadow-sm"
+            />
+            <h4 className="text-xs sm:text-sm font-extrabold text-navy-900 mt-2 truncate w-full">
+              {podium[0].name}
+            </h4>
+            <span className="text-xs sm:text-sm font-extrabold text-amber-600">
+              {podium[0].orders} Orders
+            </span>
+            <span className="text-[10px] text-slate-400">
+              {podium[0].earnings}
+            </span>
           </div>
-          <img
-            src={podium[0].avatar}
-            alt={podium[0].name}
-            className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover ring-4 ring-amber-400 mt-2 shadow-sm"
-          />
-          <h4 className="text-xs sm:text-sm font-extrabold text-navy-900 mt-2 truncate w-full">
-            {podium[0].name}
-          </h4>
-          <span className="text-xs sm:text-sm font-extrabold text-amber-600">
-            {podium[0].orders} Orders
-          </span>
-          <span className="text-[10px] text-slate-400">
-            {podium[0].earnings}
-          </span>
-        </div>
 
-        {/* 3rd Place (Bronze) */}
-        <div className="bg-white rounded-2xl p-3 sm:p-4 border border-amber-100 shadow-card flex flex-col items-center text-center order-3 relative">
-          <div className="absolute -top-3 w-6 h-6 rounded-full bg-amber-100 text-amber-900 font-extrabold text-xs flex items-center justify-center shadow-sm">
-            3
+          {/* 3rd Place (Bronze) */}
+          <div className="bg-white rounded-2xl p-3 sm:p-4 border border-amber-100 shadow-card flex flex-col items-center text-center order-3 relative">
+            <div className="absolute -top-3 w-6 h-6 rounded-full bg-amber-100 text-amber-900 font-extrabold text-xs flex items-center justify-center shadow-sm">
+              3
+            </div>
+            <img
+              src={podium[2].avatar}
+              alt={podium[2].name}
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-amber-200 mt-2"
+            />
+            <h4 className="text-xs sm:text-sm font-bold text-navy-900 mt-2 truncate w-full">
+              {podium[2].name}
+            </h4>
+            <span className="text-[10px] sm:text-xs font-extrabold text-brand-600">
+              {podium[2].orders} Orders
+            </span>
+            <span className="text-[10px] text-slate-400">
+              {podium[2].earnings}
+            </span>
           </div>
-          <img
-            src={podium[2].avatar}
-            alt={podium[2].name}
-            className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-amber-200 mt-2"
-          />
-          <h4 className="text-xs sm:text-sm font-bold text-navy-900 mt-2 truncate w-full">
-            {podium[2].name}
-          </h4>
-          <span className="text-[10px] sm:text-xs font-extrabold text-brand-600">
-            {podium[2].orders} Orders
-          </span>
-          <span className="text-[10px] text-slate-400">
-            {podium[2].earnings}
-          </span>
         </div>
-      </div>
+      )}
 
       {/* Sticky User Position Banner */}
       <div className="bg-gradient-to-r from-brand-700 to-blue-600 text-white rounded-2xl p-4 shadow-md flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-extrabold text-base">
-            #12
+            #{user.stats.rank || 7}
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -111,14 +116,14 @@ export default function LeaderboardPage() {
               <span className="text-[10px] font-bold bg-amber-400 text-amber-950 px-1.5 py-0.5 rounded">YOU</span>
             </div>
             <p className="text-xs text-blue-100 mt-0.5">
-              Rahul Sharma • 42 Orders completed
+              {user.name} • {user.stats.weeklyOrders} Orders completed
             </p>
           </div>
         </div>
 
         <div className="text-right">
           <span className="text-[10px] uppercase font-bold text-blue-200 block">Weekly Earnings</span>
-          <span className="text-base font-extrabold">₹4,250</span>
+          <span className="text-base font-extrabold">₹{user.stats.weeklyEarnings?.toLocaleString('en-IN')}</span>
         </div>
       </div>
 
@@ -130,7 +135,7 @@ export default function LeaderboardPage() {
 
         <div className="divide-y divide-slate-100">
           {rankings.map((exec) => {
-            const isUser = exec.isCurrentUser;
+            const isUser = exec.id === user.id || exec.name === user.name;
             return (
               <div
                 key={exec.rank}
@@ -159,17 +164,17 @@ export default function LeaderboardPage() {
                       )}
                     </div>
                     <span className="text-[10px] text-slate-400 font-mono">
-                      {exec.id} • ★ {exec.rating}
+                      {exec.id} • ★ {exec.rating || 4.8}
                     </span>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
                   <span className={`text-xs ${isUser ? 'font-black text-brand-700' : 'font-bold text-navy-900'}`}>
-                    {exec.orders} Orders
+                    {isUser ? user.stats.weeklyOrders : exec.orders} Orders
                   </span>
                   <span className="text-[10px] text-slate-400 block font-medium">
-                    {exec.earnings}
+                    {isUser ? `₹${user.stats.weeklyEarnings?.toLocaleString('en-IN')}` : exec.earnings}
                   </span>
                 </div>
               </div>

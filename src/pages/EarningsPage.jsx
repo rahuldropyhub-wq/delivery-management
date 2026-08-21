@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import {
-  earningsSummary,
-  earningsChartData,
-  dailyEarningsBreakdown,
-  payoutHistory
-} from '../data/earnings';
+import { useData } from '../context/DataContext';
 import StatCard from '../components/common/StatCard';
 import StatusBadge from '../components/common/StatusBadge';
 import DateFilter from '../components/common/DateFilter';
@@ -61,7 +56,14 @@ const CustomChartTooltip = ({ active, payload, label }) => {
 };
 
 export default function EarningsPage() {
-  const { uiStateMode, setUiStateMode } = useAuth();
+  const { uiStateMode, setUiStateMode, activeExecutiveId } = useAuth();
+  const { data: globalData, getExecutive } = useData();
+  const user = getExecutive(activeExecutiveId);
+  const earningsSummary = globalData.earnings.summary;
+  const payoutHistory = globalData.earnings.payoutHistory;
+  const dailyEarningsBreakdown = globalData.earnings.dailyBreakdown;
+  const earningsChartData = globalData.earnings.chartData;
+
   const [selectedPeriod, setSelectedPeriod] = useState("thisWeek");
 
   const chartData = earningsChartData[selectedPeriod] || earningsChartData.thisWeek;
@@ -104,7 +106,7 @@ export default function EarningsPage() {
               Payout Status
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold mt-2">
-              ₹{earningsSummary.total.toLocaleString('en-IN')}
+              ₹{(user.stats.totalEarnings || earningsSummary.total).toLocaleString('en-IN')}
             </h2>
             <p className="text-xs text-blue-100 mt-1 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
@@ -116,7 +118,7 @@ export default function EarningsPage() {
             <span className="text-blue-200 block text-[10px] uppercase font-bold">Transfer To</span>
             <p className="font-bold text-white mt-0.5 flex items-center gap-1.5">
               <Building2 className="w-4 h-4 text-blue-200" />
-              <span>{earningsSummary.payoutAccount}</span>
+              <span>{user.payoutAccount?.bankName || "HDFC Bank"} ({user.payoutAccount?.accountNumberMasked || "•••• 7821"})</span>
             </p>
           </div>
         </div>
@@ -126,7 +128,7 @@ export default function EarningsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Delivery Earnings"
-          value={`₹${earningsSummary.deliveryEarnings.toLocaleString('en-IN')}`}
+          value={`₹${(user.stats.deliveryEarnings || earningsSummary.deliveryEarnings).toLocaleString('en-IN')}`}
           subtitle="Trip Base + Surge"
           icon={IndianRupee}
           accentColor="blue"
@@ -134,7 +136,7 @@ export default function EarningsPage() {
 
         <StatCard
           title="Bonus & Incentives"
-          value={`₹${earningsSummary.bonus.toLocaleString('en-IN')}`}
+          value={`₹${(user.stats.bonusEarnings || earningsSummary.bonus).toLocaleString('en-IN')}`}
           subtitle="Milestones Unlocked"
           icon={Gift}
           accentColor="amber"
@@ -142,15 +144,15 @@ export default function EarningsPage() {
 
         <StatCard
           title="Referral Earnings"
-          value={`₹${earningsSummary.referral.toLocaleString('en-IN')}`}
-          subtitle="5 Friends Active"
+          value={`₹${(user.stats.referralEarnings || earningsSummary.referral).toLocaleString('en-IN')}`}
+          subtitle="Friends Active"
           icon={Users}
           accentColor="emerald"
         />
 
         <StatCard
           title="Total Earnings"
-          value={`₹${earningsSummary.total.toLocaleString('en-IN')}`}
+          value={`₹${(user.stats.totalEarnings || earningsSummary.total).toLocaleString('en-IN')}`}
           subtitle="This Payout Cycle"
           icon={Wallet}
           accentColor="purple"

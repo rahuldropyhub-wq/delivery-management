@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { Package, IndianRupee, Gift, Trophy, ShieldCheck, Sparkles } from 'lucide-react';
 import StatCard from '../components/common/StatCard';
 import StatusBadge from '../components/common/StatusBadge';
@@ -13,7 +14,9 @@ import EmptyState from '../components/common/EmptyState';
 import ErrorState from '../components/common/ErrorState';
 
 export default function DashboardPage() {
-  const { user, uiStateMode, setUiStateMode } = useAuth();
+  const { activeExecutiveId, uiStateMode, setUiStateMode } = useAuth();
+  const { getExecutive } = useData();
+  const user = getExecutive(activeExecutiveId);
 
   // Loading state simulation
   if (uiStateMode === 'loading') {
@@ -86,11 +89,11 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200/80">
             <span className="text-slate-400 font-normal">KYC:</span>
-            <StatusBadge status="Verified" size="sm" />
+            <StatusBadge status={user.kycStatus || "Verified"} size="sm" />
           </div>
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200/80">
             <span className="text-slate-400 font-normal">Status:</span>
-            <StatusBadge status="Active" size="sm" />
+            <StatusBadge status={user.accountStatus || "Active"} size="sm" />
           </div>
         </div>
       </div>
@@ -126,7 +129,7 @@ export default function DashboardPage() {
 
         <StatCard
           title="Rank"
-          value={`#${user.stats.rank}`}
+          value={`#${user.stats.rank || 7}`}
           subtitle="Zone Standing"
           icon={Trophy}
           accentColor="purple"

@@ -1,12 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { currentUser } from '../data/user';
 import { supabase, isSupabaseConfigured } from '../config/supabase';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  // Role: 'executive' | 'manager'
+  const [role, setRole] = useState(() => {
+    return localStorage.getItem('dp_role') || 'executive';
+  });
+
+  const [activeManager, setActiveManager] = useState(() => {
+    return localStorage.getItem('dp_active_manager') || 'Manager 1';
+  });
+
+  const [activeExecutiveId, setActiveExecutiveId] = useState(() => {
+    return localStorage.getItem('dp_active_exec_id') || 'EXE12345';
+  });
+
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const saved = localStorage.getItem('dp_auth');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [isManagerAuthenticated, setIsManagerAuthenticated] = useState(() => {
+    const saved = localStorage.getItem('dp_mgr_auth');
     return saved !== null ? saved === 'true' : true;
   });
 
@@ -14,12 +31,27 @@ export function AuthProvider({ children }) {
     return localStorage.getItem('dp_pending_mobile') || "+91 9030545655";
   });
 
-  const [user, setUser] = useState(currentUser);
   const [uiStateMode, setUiStateMode] = useState('normal'); // 'normal' | 'loading' | 'empty' | 'error'
 
   useEffect(() => {
     localStorage.setItem('dp_auth', isAuthenticated ? 'true' : 'false');
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    localStorage.setItem('dp_mgr_auth', isManagerAuthenticated ? 'true' : 'false');
+  }, [isManagerAuthenticated]);
+
+  useEffect(() => {
+    localStorage.setItem('dp_role', role);
+  }, [role]);
+
+  useEffect(() => {
+    localStorage.setItem('dp_active_manager', activeManager);
+  }, [activeManager]);
+
+  useEffect(() => {
+    localStorage.setItem('dp_active_exec_id', activeExecutiveId);
+  }, [activeExecutiveId]);
 
   useEffect(() => {
     if (pendingMobile) {
@@ -33,20 +65,12 @@ export function AuthProvider({ children }) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
           setIsAuthenticated(true);
-          setUser((prev) => ({
-            ...prev,
-            mobile: session.user.phone || prev.mobile,
-          }));
         }
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
           setIsAuthenticated(true);
-          setUser((prev) => ({
-            ...prev,
-            mobile: session.user.phone || prev.mobile,
-          }));
         }
       });
 
@@ -57,7 +81,6 @@ export function AuthProvider({ children }) {
   const sendOtp = async (mobile) => {
     setPendingMobile(mobile);
 
-    // Format mobile number to E.164 standard (e.g. +919030545655)
     const cleaned = mobile.replace(/[^0-9+]/g, '');
     const formatted = cleaned.startsWith('+') ? cleaned : `+91${cleaned.slice(-10)}`;
 
@@ -89,7 +112,7 @@ export function AuthProvider({ children }) {
       }
     } else {
       // Fallback demo simulation
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 400));
       return {
         success: true,
         isSupabase: false,
@@ -119,12 +142,7 @@ export function AuthProvider({ children }) {
         }
 
         setIsAuthenticated(true);
-        if (data?.user) {
-          setUser((prev) => ({
-            ...prev,
-            mobile: data.user.phone || formatted
-          }));
-        }
+        setRole('executive');
         return { success: true };
       } catch (err) {
         console.error("Supabase verification exception:", err);
@@ -134,13 +152,32 @@ export function AuthProvider({ children }) {
         };
       }
     } else {
-      // Mock validation
-      await new Promise((r) => setTimeout(r, 600));
+      // Mock validation (Demo OTP = 123456)
+      await new Promise((r) => setTimeout(r, 400));
       if (otp === "123456") {
         setIsAuthenticated(true);
+        setRole('executive');
         return { success: true };
       }
       return { success: false, error: "Invalid OTP. Enter 123456 for demo code." };
+    }
+  };
+
+  const loginAsManager = (managerName = "Manager 1") => {
+    setActiveManager(managerName);
+    setIsManagerAuthenticated(true);
+    setRole('manager');
+    return { success: true };
+  };
+
+  const switchRole = (newRole, identifier) => {
+    setRole(newRole);
+    if (newRole === 'manager') {
+      if (identifier) setActiveManager(identifier);
+      setIsManagerAuthenticated(true);
+    } else if (newRole === 'executive') {
+      if (identifier) setActiveExecutiveId(identifier);
+      setIsAuthenticated(true);
     }
   };
 
@@ -154,15 +191,29 @@ export function AuthProvider({ children }) {
     localStorage.setItem('dp_auth', 'false');
   };
 
+  const logoutManager = () => {
+    setIsManagerAuthenticated(false);
+    localStorage.setItem('dp_mgr_auth', 'false');
+  };
+
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated,
-        user,
+        isManagerAuthenticated,
+        role,
+        setRole,
+        activeManager,
+        setActiveManager,
+        activeExecutiveId,
+        setActiveExecutiveId,
         pendingMobile,
         sendOtp,
         verifyOtp,
+        loginAsManager,
+        switchRole,
         logout,
+        logoutManager,
         uiStateMode,
         setUiStateMode,
         isSupabaseConfigured

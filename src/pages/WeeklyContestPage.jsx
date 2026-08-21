@@ -1,12 +1,14 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { weeklyContestData } from '../data/contest';
+import { useData } from '../context/DataContext';
 import { Trophy, Award, Clock, ArrowRight, Sparkles, CheckCircle2, ShieldCheck, Flame } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function WeeklyContestPage() {
-  const { user } = useAuth();
-  const contest = weeklyContestData;
+  const { activeExecutiveId } = useAuth();
+  const { data, getExecutive } = useData();
+  const user = getExecutive(activeExecutiveId);
+  const contest = data.contest;
 
   return (
     <div className="space-y-4 sm:space-y-6 max-w-4xl mx-auto">
@@ -21,7 +23,7 @@ export default function WeeklyContestPage() {
             </span>
             <span className="text-xs text-amber-100 font-semibold flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              {contest.daysRemaining} days remaining
+              {contest.daysRemaining || 4} days remaining
             </span>
           </div>
 
@@ -50,7 +52,7 @@ export default function WeeklyContestPage() {
         <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
           <h3 className="text-sm font-bold text-navy-900">Your Contest Standing</h3>
           <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-            {contest.userStanding.trend}
+            {contest.userStanding?.trend || "Live Standing"}
           </span>
         </div>
 
@@ -58,21 +60,21 @@ export default function WeeklyContestPage() {
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
             <span className="text-[11px] font-semibold text-slate-400 uppercase">Current Rank</span>
             <p className="text-2xl font-extrabold text-brand-600 mt-0.5">
-              #{contest.userStanding.position}
+              #{user.stats.rank || contest.userStanding?.position || 12}
             </p>
           </div>
 
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
             <span className="text-[11px] font-semibold text-slate-400 uppercase">Orders Count</span>
             <p className="text-2xl font-extrabold text-navy-900 mt-0.5">
-              {contest.userStanding.orders}
+              {user.stats.weeklyOrders}
             </p>
           </div>
 
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
             <span className="text-[11px] font-semibold text-slate-400 uppercase">Gap to Top 10</span>
             <p className="text-2xl font-extrabold text-amber-600 mt-0.5">
-              6 Orders
+              {Math.max(0, 48 - user.stats.weeklyOrders)} Orders
             </p>
           </div>
 
@@ -93,10 +95,10 @@ export default function WeeklyContestPage() {
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          {contest.prizes.map((prize) => (
+          {(contest.prizes || []).map((prize) => (
             <div
               key={prize.position}
-              className={`p-4 rounded-2xl border ${prize.bgColor} flex flex-col justify-between text-left`}
+              className={`p-4 rounded-2xl border ${prize.bgColor || 'bg-slate-50 border-slate-200'} flex flex-col justify-between text-left`}
             >
               <div>
                 <span className="text-xs font-extrabold text-navy-900 block">
@@ -125,7 +127,7 @@ export default function WeeklyContestPage() {
         </h3>
 
         <div className="space-y-2.5 text-xs text-slate-600">
-          {contest.rules.map((rule, idx) => (
+          {(contest.rules || []).map((rule, idx) => (
             <div key={idx} className="flex items-start gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
               <p className="leading-relaxed">{rule}</p>

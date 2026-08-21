@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { referralData } from '../data/referrals';
+import { useData } from '../context/DataContext';
 import StatusBadge from '../components/common/StatusBadge';
 import { useToast } from '../context/ToastContext';
 import {
@@ -17,6 +17,8 @@ import {
 
 export default function ReferralsPage() {
   const { user } = useAuth();
+  const { data } = useData();
+  const referralData = data.referrals;
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -131,18 +133,18 @@ export default function ReferralsPage() {
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-card text-center">
           <span className="text-[11px] font-semibold text-slate-400 uppercase block">Total Earned</span>
           <p className="text-2xl font-extrabold text-navy-900 mt-0.5">₹{stats.totalEarned}</p>
-          <span className="text-[10px] text-slate-400">₹{stats.pendingBonus} in progress</span>
+          <span className="text-[10px] text-slate-400">₹{stats.pendingBonus || 900} in progress</span>
         </div>
       </div>
 
       {/* Referral History List */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-100 shadow-card">
         <h3 className="text-sm font-bold text-navy-900 mb-3 pb-2 border-b border-slate-100">
-          Your Referral Network ({referralData.referralsList.length})
+          Your Referral Network ({(referralData.referralsList || []).length})
         </h3>
 
         <div className="divide-y divide-slate-100">
-          {referralData.referralsList.map((ref) => (
+          {(referralData.referralsList || []).map((ref) => (
             <div key={ref.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div>
                 <div className="flex items-center gap-2">

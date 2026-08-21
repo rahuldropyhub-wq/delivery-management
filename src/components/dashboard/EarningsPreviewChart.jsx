@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   Cell
 } from 'recharts';
-import { earningsChartData } from '../../data/earnings';
+import { useData } from '../../context/DataContext';
 import DateFilter from '../common/DateFilter';
 import { TrendingUp, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -36,9 +36,11 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function EarningsPreviewChart({ className = "" }) {
   const [period, setPeriod] = useState("thisWeek");
-  const data = earningsChartData[period] || earningsChartData.thisWeek;
+  const { data: globalData } = useData();
+  const chartData = globalData.earnings.chartData;
+  const currentChartData = chartData[period] || chartData.thisWeek;
 
-  const totalPeriodEarnings = data.reduce((acc, curr) => acc + curr.earnings, 0);
+  const totalPeriodEarnings = currentChartData.reduce((acc, curr) => acc + curr.earnings, 0);
 
   return (
     <div className={`bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-card ${className}`}>
@@ -70,7 +72,7 @@ export default function EarningsPreviewChart({ className = "" }) {
       {/* Chart */}
       <div className="h-44 sm:h-52 w-full mt-2">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 0, left: -24, bottom: 0 }}>
+          <BarChart data={currentChartData} margin={{ top: 8, right: 0, left: -24, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
             <XAxis
               dataKey="label"
@@ -90,7 +92,7 @@ export default function EarningsPreviewChart({ className = "" }) {
               radius={[6, 6, 0, 0]}
               animationDuration={800}
             >
-              {data.map((entry, index) => (
+              {currentChartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.label === 'Fri' || entry.label === 'Sat' || entry.label === 'Week 2' ? '#2563eb' : '#93c5fd'}

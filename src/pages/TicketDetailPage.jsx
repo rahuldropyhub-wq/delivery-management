@@ -1,51 +1,46 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { initialTickets } from '../data/tickets';
 import StatusBadge from '../components/common/StatusBadge';
 import { useAuth } from '../context/AuthContext';
+import { useData } from '../context/DataContext';
 import { useToast } from '../context/ToastContext';
 import { ArrowLeft, Send, ShieldCheck, Headphones, CheckCircle2, User } from 'lucide-react';
 
 export default function TicketDetailPage() {
   const { ticketId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { activeExecutiveId } = useAuth();
+  const { data, getExecutive, replyTicket } = useData();
+  const user = getExecutive(activeExecutiveId);
   const { showToast } = useToast();
 
-  const ticket = initialTickets.find((t) => t.id === ticketId) || initialTickets[0];
-  const [messages, setMessages] = useState(ticket.messages || []);
+  const ticket = (data.tickets || []).find((t) => t.id === ticketId) || data.tickets[0];
   const [replyText, setReplyText] = useState("");
 
   const handleSendReply = (e) => {
     e.preventDefault();
     if (!replyText.trim()) return;
 
-    const newMessage = {
+    replyTicket(ticket.id, {
       sender: "user",
       senderName: user.name,
       avatar: user.avatar,
-      message: replyText.trim(),
-      time: "Just now"
-    };
+      message: replyText.trim()
+    });
 
-    setMessages([...messages, newMessage]);
     setReplyText("");
     showToast("Reply sent to support desk", "info");
-
-    // Simulated automated acknowledgment
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "agent",
-          senderName: "Nellore Hub Agent",
-          avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80",
-          message: "Thank you for the update. Our support team is investigating and will follow up shortly.",
-          time: "Just now"
-        }
-      ]);
-    }, 1500);
   };
+
+  if (!ticket) {
+    return (
+      <div className="p-10 text-center text-slate-500">
+        Ticket not found. <Link to="/app/support" className="text-brand-600 font-bold">Back to tickets</Link>
+      </div>
+    );
+  }
+
+  const messages = ticket.messages || [];
 
   return (
     <div className="space-y-4 max-w-3xl mx-auto">

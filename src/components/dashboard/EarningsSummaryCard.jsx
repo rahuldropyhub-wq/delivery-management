@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowRight, Wallet, Sparkles, Users } from 'lucide-react';
-import { earningsSummary } from '../../data/earnings';
+import { useData } from '../../context/DataContext';
 
-export default function EarningsSummaryCard({ summary = earningsSummary, className = "" }) {
+export default function EarningsSummaryCard({ summary, className = "" }) {
+  const { data } = useData();
+  const activeSummary = summary || data.earnings.summary;
+
   return (
     <div className={`bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-card ${className}`}>
       <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-slate-100">
@@ -26,7 +29,7 @@ export default function EarningsSummaryCard({ summary = earningsSummary, classNa
             Delivery Earnings
           </span>
           <span className="font-bold text-navy-900">
-            ₹{summary.deliveryEarnings.toLocaleString('en-IN')}
+            ₹{activeSummary.deliveryEarnings.toLocaleString('en-IN')}
           </span>
         </div>
 
@@ -37,7 +40,7 @@ export default function EarningsSummaryCard({ summary = earningsSummary, classNa
             Milestone & Incentive Bonus
           </span>
           <span className="font-bold text-navy-900">
-            ₹{summary.bonus.toLocaleString('en-IN')}
+            ₹{activeSummary.bonus.toLocaleString('en-IN')}
           </span>
         </div>
 
@@ -48,7 +51,7 @@ export default function EarningsSummaryCard({ summary = earningsSummary, classNa
             Referral Earnings
           </span>
           <span className="font-bold text-navy-900">
-            ₹{summary.referral.toLocaleString('en-IN')}
+            ₹{activeSummary.referral.toLocaleString('en-IN')}
           </span>
         </div>
 
@@ -58,7 +61,7 @@ export default function EarningsSummaryCard({ summary = earningsSummary, classNa
             Total Earnings
           </span>
           <span className="text-lg font-extrabold text-brand-600">
-            ₹{summary.total.toLocaleString('en-IN')}
+            ₹{activeSummary.total.toLocaleString('en-IN')}
           </span>
         </div>
       </div>

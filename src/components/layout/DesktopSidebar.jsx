@@ -14,22 +14,25 @@ import {
   CreditCard,
   Headphones,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  Building2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { initialNotifications } from '../../data/notifications';
+import { useData } from '../../context/DataContext';
 
 export default function DesktopSidebar() {
-  const { user, logout } = useAuth();
+  const { activeExecutiveId, logout, switchRole } = useAuth();
+  const { getExecutive, data } = useData();
+  const user = getExecutive(activeExecutiveId);
   const navigate = useNavigate();
-  const unreadCount = initialNotifications.filter((n) => !n.isRead).length;
+  const unreadCount = data.notifications.filter((n) => !n.isRead).length;
 
   const links = [
     { label: "Dashboard", path: "/app/dashboard", icon: LayoutDashboard },
     { label: "My Profile", path: "/app/profile", icon: User },
     { label: "My Orders", path: "/app/orders", icon: Package },
     { label: "Earnings", path: "/app/earnings", icon: Wallet },
-    { label: "Milestones", path: "/app/milestones", icon: Target, badge: "84%" },
+    { label: "Milestones", path: "/app/milestones", icon: Target, badge: `${user.stats.progressPercentage}%` },
     { label: "Weekly Contest", path: "/app/weekly-contest", icon: Trophy },
     { label: "Leaderboard", path: "/app/leaderboard", icon: Award },
     { label: "My Rewards", path: "/app/rewards", icon: Gift },
@@ -42,6 +45,11 @@ export default function DesktopSidebar() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleSwitchToManager = () => {
+    switchRole('manager', 'Manager 1');
+    navigate('/manager/dashboard');
   };
 
   return (
@@ -91,6 +99,17 @@ export default function DesktopSidebar() {
             </NavLink>
           );
         })}
+      </div>
+
+      {/* Switch to Manager Shortcut */}
+      <div className="px-3 pb-2">
+        <button
+          onClick={handleSwitchToManager}
+          className="w-full py-2 px-3 rounded-xl bg-navy-800/80 hover:bg-navy-800 text-brand-300 hover:text-white border border-brand-500/20 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+        >
+          <Building2 className="w-4 h-4 text-brand-400" />
+          <span>Go to Manager Panel</span>
+        </button>
       </div>
 
       {/* Bottom Profile / Logout Footer */}
