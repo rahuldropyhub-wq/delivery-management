@@ -87,7 +87,7 @@ export default function OtpVerificationPage() {
     setIsVerifying(false);
 
     if (result.success) {
-      showToast("Welcome back, Rahul!", "success");
+      showToast("Verification successful! Entering dashboard...", "success");
       navigate('/app/dashboard');
     } else {
       setErrorMessage(result.error || "Invalid OTP code entered.");
